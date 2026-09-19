@@ -5,8 +5,10 @@ Standalone browser-based quote and typography image creator. This is a separate 
 ## Included
 
 - Kiocreates visual identity and color system
-- Template Mode with 18 coded layouts
-- Free Mode / blank canvas
+- Template Mode with 51 coded layouts across Clean, Mixed Fonts, Editorial, Bold, Soft, Dark, and Photo categories
+- Mixed-font templates using Inter, DM Sans, Manrope, Space Grotesk, Playfair Display, Cormorant Garamond, Libre Baskerville, Caveat, Bebas Neue, Poppins, and fallbacks
+- Automatic quote splitting across differently styled template sections, with manual line-break control
+- Free Mode / blank canvas with per-layer font selection
 - Square 1080×1080
 - Portrait 1080×1350
 - Landscape 1200×630
@@ -41,3 +43,5 @@ Open http://localhost:3000
 ## Notes
 
 All exported images are rendered client-side using the browser Canvas API. Uploaded pictures stay in the user's browser and are not sent to a server.
+
+Typography templates use Google Fonts when available, with system font fallbacks. The export waits for loaded web fonts so the JPG/WebP output matches the editor preview as closely as the browser supports.
