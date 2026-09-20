@@ -1044,6 +1044,15 @@ export default function TypographyStudio() {
   const frameFileRef = useRef(null);
   const backgroundFileRef = useRef(null);
   const pendingFrameIdRef = useRef(null);
+  const remixFileRef = useRef(null);
+
+  const [remixImageSrc, setRemixImageSrc] = useState('');
+  const [remixFileName, setRemixFileName] = useState('');
+  const [remixDetectedText, setRemixDetectedText] = useState('');
+  const [remixStatus, setRemixStatus] = useState('');
+  const [remixBusy, setRemixBusy] = useState(false);
+  const [remixSuggestions, setRemixSuggestions] = useState([]);
+  const [remixSeed, setRemixSeed] = useState(0);
 
   const [canvasWidth, canvasHeight] = CANVAS_PRESETS[sizeKey];
   const selected = layers.find((l) => l.id === selectedId) || null;
@@ -1222,6 +1231,167 @@ export default function TypographyStudio() {
     const url = URL.createObjectURL(file);
     updateLayer(frameId, { imageSrc: url, imageName: file.name, imageScale: 1, imagePositionX: 50, imagePositionY: 50 });
     pendingFrameIdRef.current = null;
+  };
+
+  const sanitizeOCRText = (value) => String(value || '')
+    .replace(/\r/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ +\n/g, '\n')
+    .trim();
+
+  const uploadRemixReference = async (file) => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setRemixImageSrc(url);
+    setRemixFileName(file.name || 'reference');
+    setRemixStatus('Reading the post and extracting text…');
+    setRemixDetectedText('');
+    setRemixSuggestions([]);
+    setRemixBusy(true);
+    try {
+      const Tesseract = await import('tesseract.js');
+      const result = await Tesseract.recognize(file, 'eng');
+      const parsed = sanitizeOCRText(result?.data?.text || '');
+      setRemixDetectedText(parsed || '');
+      setRemixStatus(parsed ? 'Detected text. Review it below, then generate 5 suggested designs.' : 'Could not confidently detect text. You can type or paste the caption below, then generate designs.');
+    } catch (error) {
+      setRemixStatus('OCR was not available. You can still type/paste the text below and generate designs manually.');
+    } finally {
+      setRemixBusy(false);
+    }
+  };
+
+  const clearRemixReference = () => {
+    setRemixImageSrc('');
+    setRemixFileName('');
+    setRemixDetectedText('');
+    setRemixStatus('');
+    setRemixSuggestions([]);
+    setRemixSeed(0);
+  };
+
+  const shuffleList = (items, seed = Math.random()) => {
+    const list = [...items];
+    let s = Math.floor(seed * 100000) || 1;
+    const rand = () => {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+  };
+
+  const buildRemixSuggestions = (seedValue = Math.random()) => {
+    const hasImage = Boolean(remixImageSrc);
+    const textValue = remixDetectedText.trim() || quoteText.trim() || starterQuote;
+    const matching = (exp) => templates.filter((template) => exp.test(`${template.category} ${template.name} ${template.id}`));
+    const pools = hasImage
+      ? [
+          matching(/poetry|relatable|photo|frame|editorial/i),
+          matching(/mixed|soft|minimal|circular/i),
+          matching(/effect|repeat|poster|dark/i),
+          templates
+        ]
+      : [
+          matching(/poetry|relatable|editorial|mixed/i),
+          matching(/minimal|soft|bold|poster/i),
+          matching(/effect|repeat|dark/i),
+          templates
+        ];
+    const picked = [];
+    const seen = new Set();
+    for (const pool of pools) {
+      for (const item of shuffleList(pool, seedValue + picked.length)) {
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        picked.push(item);
+        if (picked.length === 5) break;
+      }
+      if (picked.length === 5) break;
+    }
+    const finalItems = picked.slice(0, 5);
+    const suggestions = finalItems.map((template, index) => ({
+      id: `remix-${index}-${template.id}`,
+      templateId: template.id,
+      name: template.name,
+      category: template.category,
+      useImage: hasImage && /photo|frame|poetry|relatable|editorial/i.test(`${template.category} ${template.name} ${template.id}`),
+      backgroundInstead: hasImage && /minimal|soft|dark|effect|repeat/i.test(`${template.category} ${template.name} ${template.id}`) && !/photo|frame/i.test(`${template.category} ${template.name} ${template.id}`),
+      text: textValue
+    }));
+    setRemixSeed(seedValue);
+    setRemixSuggestions(suggestions);
+  };
+
+  const applyRemixSuggestion = (suggestion) => {
+    const textValue = suggestion?.text?.trim() || remixDetectedText.trim() || quoteText.trim() || starterQuote;
+    const next = makeTemplateState(suggestion.templateId, sizeKey, textValue);
+    let nextLayers = next.layers;
+    if (remixImageSrc && suggestion.useImage) {
+      let frameAttached = false;
+      nextLayers = nextLayers.map((layer) => {
+        if (!frameAttached && layer.type === 'frame') {
+          frameAttached = true;
+          return {
+            ...layer,
+            imageSrc: remixImageSrc,
+            imageName: remixFileName || 'reference',
+            imageScale: 1,
+            imagePositionX: 50,
+            imagePositionY: 50,
+            opacity: 1,
+            blendMode: 'normal'
+          };
+        }
+        return layer;
+      });
+      if (!frameAttached) {
+        const imageLayer = {
+          id: nextId(),
+          type: 'image',
+          src: remixImageSrc,
+          name: remixFileName || 'reference',
+          x: canvasWidth * 0.18,
+          y: canvasHeight * 0.18,
+          width: canvasWidth * 0.64,
+          height: canvasHeight * 0.42,
+          rotation: 0,
+          opacity: 1,
+          z: Math.max(4, ...nextLayers.map((layer) => layer.z || 1)) + 1,
+          aspectLocked: true
+        };
+        nextLayers = [...nextLayers, imageLayer];
+      }
+    }
+
+    setTemplateId(suggestion.templateId);
+    setMode('template');
+    setQuoteText(textValue);
+    setBackground(next.background);
+    setGradient(next.gradient);
+    setLayers(nextLayers);
+    setSelectedId(nextLayers.find((layer) => layer.role === 'quote')?.id || nextLayers[0]?.id || null);
+    setBrandStyleKey(footerStyleForTemplate(templates.find((item) => item.id === suggestion.templateId)));
+    setTemplateLocked(true);
+    if (remixImageSrc) {
+      if (suggestion.backgroundInstead) {
+        setBackgroundPhoto(remixImageSrc);
+        setBackgroundPhotoOpacity(0.28);
+        setBackgroundPhotoBlend('multiply');
+        setBackgroundPhotoBlur(0);
+        setBackgroundPhotoPlacement('full');
+        setBackgroundPhotoScale(1.1);
+        setBackgroundPhotoPositionX(50);
+        setBackgroundPhotoPositionY(50);
+      } else {
+        setBackgroundPhoto('');
+      }
+    }
+    document.querySelector('.stageColumn')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const layerMovementLocked = (layer) => Boolean(layer?.locked || (mode === 'template' && templateLocked && layer?.templateOwned));
@@ -1552,6 +1722,53 @@ export default function TypographyStudio() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="panelSection">
+            <div className="sectionTitle">Recreate from post</div>
+            <div className="buttonRow addRow remixActions">
+              <button className="secondaryBtn" onClick={() => remixFileRef.current?.click()}>{remixImageSrc ? 'Replace reference' : 'Upload post'}</button>
+              {remixImageSrc && <button className="miniBtn danger" onClick={clearRemixReference}>Clear</button>}
+            </div>
+            <input ref={remixFileRef} hidden type="file" accept="image/*" onChange={(e) => { uploadRemixReference(e.target.files?.[0]); e.target.value = ''; }} />
+            {remixImageSrc && (
+              <div className="remixPreviewWrap">
+                <img className="remixPreviewImage" src={remixImageSrc} alt="Reference post" />
+                <div className="remixMeta">
+                  <strong>{remixFileName || 'Reference post'}</strong>
+                  <span>{remixBusy ? 'Scanning text…' : 'Reference ready'}</span>
+                </div>
+              </div>
+            )}
+            <p className="remixHint">Upload a post screenshot and TyponiKio will suggest five redesigned versions. You can review the detected text before generating.</p>
+            {remixStatus && <div className="statusNote">{remixStatus}</div>}
+            <textarea className="quoteInput remixTextarea" placeholder="Detected or pasted text will appear here…" value={remixDetectedText} onChange={(e) => setRemixDetectedText(e.target.value)} />
+            <div className="buttonRow remixGenerateRow">
+              <button className="primaryBtn" disabled={remixBusy || (!remixDetectedText.trim() && !quoteText.trim())} onClick={() => buildRemixSuggestions(Math.random())}>Generate 5 designs</button>
+              {remixSuggestions.length > 0 && <button className="ghostBtn" disabled={remixBusy} onClick={() => buildRemixSuggestions(Math.random() + remixSeed)}>5 more</button>}
+            </div>
+            {remixSuggestions.length > 0 && (
+              <div className="remixSuggestionList">
+                {remixSuggestions.map((suggestion) => {
+                  const template = templates.find((item) => item.id === suggestion.templateId);
+                  if (!template) return null;
+                  return (
+                    <div key={suggestion.id} className="remixSuggestionCard">
+                      <div className="remixSuggestionHead">
+                        <div>
+                          <strong>{suggestion.name}</strong>
+                          <span>{suggestion.category}</span>
+                        </div>
+                        <button className="miniBtn" onClick={() => applyRemixSuggestion(suggestion)}>Use</button>
+                      </div>
+                      <div className="remixSuggestionPreview">
+                        <TemplateMiniPreview template={template} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {mode === 'template' && (
