@@ -24,17 +24,88 @@ const FONT_OPTIONS = [
   { label: 'Manrope', value: 'Manrope, Inter, ui-sans-serif, system-ui, sans-serif' },
   { label: 'Plus Jakarta Sans', value: '"Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif' },
   { label: 'Space Grotesk', value: '"Space Grotesk", Inter, ui-sans-serif, system-ui, sans-serif' },
+  { label: 'Sora', value: 'Sora, Inter, ui-sans-serif, system-ui, sans-serif' },
+  { label: 'Outfit', value: 'Outfit, Inter, ui-sans-serif, system-ui, sans-serif' },
+  { label: 'Urbanist', value: 'Urbanist, Inter, ui-sans-serif, system-ui, sans-serif' },
+  { label: 'DM Sans', value: '"DM Sans", Inter, ui-sans-serif, system-ui, sans-serif' },
+  { label: 'Syne', value: 'Syne, Inter, ui-sans-serif, system-ui, sans-serif' },
+  { label: 'Unbounded', value: 'Unbounded, Inter, ui-sans-serif, system-ui, sans-serif' },
   { label: 'Playfair Display', value: '"Playfair Display", Georgia, serif' },
   { label: 'Cormorant Garamond', value: '"Cormorant Garamond", Georgia, serif' },
   { label: 'DM Serif Display', value: '"DM Serif Display", Georgia, serif' },
   { label: 'Libre Baskerville', value: '"Libre Baskerville", Georgia, serif' },
+  { label: 'Bodoni Moda', value: '"Bodoni Moda", Georgia, serif' },
+  { label: 'Prata', value: 'Prata, Georgia, serif' },
+  { label: 'Fraunces', value: 'Fraunces, Georgia, serif' },
+  { label: 'Lora', value: 'Lora, Georgia, serif' },
+  { label: 'Abril Fatface', value: '"Abril Fatface", Georgia, serif' },
+  { label: 'Yeseva One', value: '"Yeseva One", Georgia, serif' },
+  { label: 'Cinzel', value: 'Cinzel, Georgia, serif' },
+  { label: 'Gloock', value: 'Gloock, Georgia, serif' },
   { label: 'Bebas Neue', value: '"Bebas Neue", Impact, sans-serif' },
   { label: 'Oswald', value: 'Oswald, Arial, sans-serif' },
-  { label: 'Caveat', value: 'Caveat, cursive' }
+  { label: 'Anton', value: 'Anton, Impact, sans-serif' },
+  { label: 'League Spartan', value: '"League Spartan", Arial, sans-serif' },
+  { label: 'Archivo Black', value: '"Archivo Black", Arial, sans-serif' },
+  { label: 'Barlow Condensed', value: '"Barlow Condensed", Arial, sans-serif' },
+  { label: 'Fjalla One', value: '"Fjalla One", Arial, sans-serif' },
+  { label: 'Caveat', value: 'Caveat, cursive' },
+  { label: 'Dancing Script', value: '"Dancing Script", cursive' },
+  { label: 'Sacramento', value: 'Sacramento, cursive' },
+  { label: 'Allura', value: 'Allura, cursive' },
+  { label: 'Parisienne', value: 'Parisienne, cursive' },
+  { label: 'Great Vibes', value: '"Great Vibes", cursive' },
+  { label: 'Homemade Apple', value: '"Homemade Apple", cursive' },
+  { label: 'Shadows Into Light', value: '"Shadows Into Light", cursive' },
+  { label: 'Poiret One', value: '"Poiret One", cursive' }
 ];
 
 const FONT_VALUES = FONT_OPTIONS.reduce((acc, item) => ({ ...acc, [item.label]: item.value }), {});
 const defaultFont = FONT_VALUES['Inter'];
+
+const BRAND_STYLES = {
+  social: { label: 'Facebook Sans', fontFamily: FONT_VALUES['Inter'], weight: 850, icon: 'facebook', text: 'kiocreates', letterSpacing: -0.5, scale: 1 },
+  'script-social': { label: 'Facebook + Script', fontFamily: FONT_VALUES['Allura'], weight: 500, icon: 'facebook', text: 'kiocreates', letterSpacing: 0, scale: 1.22 },
+  signature: { label: 'Signature', fontFamily: FONT_VALUES['Great Vibes'], weight: 400, icon: 'none', text: 'kiocreates', letterSpacing: 0, scale: 1.30 },
+  handwritten: { label: 'Handwritten', fontFamily: FONT_VALUES['Caveat'], weight: 700, icon: 'none', text: 'kiocreates', letterSpacing: 0, scale: 1.08 },
+  serif: { label: 'Editorial Serif', fontFamily: FONT_VALUES['Playfair Display'], weight: 700, icon: 'none', text: 'kiocreates', letterSpacing: -0.4, scale: 1.02 },
+  elegant: { label: 'Elegant Serif', fontFamily: FONT_VALUES['Cormorant Garamond'], weight: 700, icon: 'none', text: 'kiocreates', letterSpacing: 0.4, scale: 1.12 },
+  condensed: { label: 'Condensed', fontFamily: FONT_VALUES['Barlow Condensed'], weight: 700, icon: 'facebook', text: 'kiocreates', letterSpacing: 1.3, scale: 1.02 },
+  tiny: { label: 'Tiny Credit', fontFamily: FONT_VALUES['DM Sans'], weight: 700, icon: 'facebook', text: 'kiocreates', letterSpacing: 0.8, scale: 0.78 },
+  editorial: { label: 'Editorial Credit', fontFamily: FONT_VALUES['Space Grotesk'], weight: 700, icon: 'none', text: 'FACEBOOK / KIOCREATES', letterSpacing: 1.7, scale: 0.70 },
+  wordmark: { label: 'Wordmark Only', fontFamily: FONT_VALUES['Manrope'], weight: 800, icon: 'none', text: 'kiocreates', letterSpacing: -0.7, scale: 0.95 },
+  monogram: { label: 'K Monogram', fontFamily: FONT_VALUES['Sora'], weight: 800, icon: 'k', text: 'kiocreates', letterSpacing: -0.4, scale: 0.95 }
+};
+
+const BRAND_STYLE_OPTIONS = Object.entries(BRAND_STYLES).map(([value, style]) => ({ value, label: style.label }));
+
+function stringHash(value = '') {
+  return Array.from(String(value)).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+}
+
+function footerStyleForTemplate(template) {
+  if (template?.footerStyle && BRAND_STYLES[template.footerStyle]) return template.footerStyle;
+  const category = template?.category || '';
+  const pools = {
+    'Poetry & Relatable': ['signature', 'serif', 'script-social', 'handwritten', 'tiny', 'elegant'],
+    'Photo Frames': ['tiny', 'signature', 'serif', 'social'],
+    Editorial: ['serif', 'editorial', 'elegant', 'tiny'],
+    Minimal: ['social', 'tiny', 'wordmark'],
+    Minimalist: ['tiny', 'wordmark', 'serif'],
+    Bold: ['social', 'condensed', 'monogram'],
+    Poster: ['condensed', 'editorial', 'monogram'],
+    Maximalist: ['condensed', 'monogram', 'social'],
+    Mixed: ['script-social', 'serif', 'social', 'signature'],
+    Soft: ['script-social', 'signature', 'tiny', 'elegant'],
+    Dark: ['social', 'condensed', 'serif'],
+    Photo: ['tiny', 'social', 'signature'],
+    Effects: ['social', 'condensed', 'monogram'],
+    Circular: ['serif', 'signature', 'social'],
+    Repeat: ['condensed', 'tiny', 'social']
+  };
+  const pool = pools[category] || ['social', 'tiny', 'wordmark'];
+  return pool[stringHash(template?.id) % pool.length];
+}
 
 const BLEND_MODES = [
   ['normal', 'Normal'],
@@ -48,6 +119,15 @@ const BLEND_MODES = [
   ['color-burn', 'Color Burn'],
   ['color-dodge', 'Color Dodge'],
   ['difference', 'Difference']
+];
+
+const FRAME_SHAPES = [
+  ['rect', 'Rectangle'],
+  ['rounded', 'Rounded'],
+  ['circle', 'Circle'],
+  ['arch', 'Arch'],
+  ['polaroid', 'Polaroid'],
+  ['film', 'Film strip']
 ];
 
 const starterQuote = 'some days i just want to disappear for a bit and come back when everything feels lighter.';
@@ -196,18 +276,48 @@ const templates = [
 
 
   // DIGITAL POETRY / PHOTO FRAMES
-  { id:'poetry-center-window', name:'Center Window', category:'Digital Poetry', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.16,y:.68,w:.68,size:.042,weight:700, font:FONT_VALUES['Playfair Display'], frames:[{key:'main',x:.22,y:.15,w:.56,h:.42,radius:18,shape:'rect'}], label:'a small thought' },
-  { id:'poetry-left-photo', name:'Left Memory', category:'Digital Poetry', bg:'#f5f2ed', text:'#15171a', accent:'#645cff', align:'left', x:.55,y:.24,w:.34,size:.042,weight:700, font:FONT_VALUES['Cormorant Garamond'], frames:[{key:'main',x:.08,y:.14,w:.38,h:.62,radius:10,shape:'rect'}] },
-  { id:'poetry-right-photo', name:'Right Memory', category:'Digital Poetry', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.10,y:.24,w:.35,size:.044,weight:720, font:FONT_VALUES['Libre Baskerville'], frames:[{key:'main',x:.56,y:.14,w:.34,h:.60,radius:24,shape:'rect'}], topLine:true },
-  { id:'poetry-polaroid-note', name:'Polaroid Note', category:'Digital Poetry', bg:'#f0efff', text:'#15171a', accent:'#645cff', align:'center', x:.15,y:.73,w:.70,size:.040,weight:680, font:FONT_VALUES['Caveat'], frames:[{key:'main',x:.22,y:.12,w:.56,h:.48,radius:8,shape:'polaroid'}] },
-  { id:'poetry-circle-memory', name:'Circle Memory', category:'Digital Poetry', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.17,y:.64,w:.66,size:.041,weight:700, font:FONT_VALUES['DM Serif Display'], frames:[{key:'main',x:.28,y:.12,w:.44,h:.44,radius:999,shape:'circle'}] },
-  { id:'poetry-double-memory', name:'Double Memory', category:'Digital Poetry', bg:'#f7f7f5', text:'#15171a', accent:'#645cff', align:'center', x:.18,y:.66,w:.64,size:.040,weight:700, font:FONT_VALUES['Inter'], frames:[{key:'a',x:.10,y:.13,w:.36,h:.42,radius:18,shape:'rect'},{key:'b',x:.54,y:.18,w:.36,h:.42,radius:18,shape:'rect'}] },
-  { id:'poetry-three-stills', name:'Three Stills', category:'Digital Poetry', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.12,y:.68,w:.72,size:.038,weight:680, font:FONT_VALUES['Playfair Display'], frames:[{key:'a',x:.08,y:.12,w:.25,h:.40,radius:12,shape:'rect'},{key:'b',x:.375,y:.08,w:.25,h:.44,radius:12,shape:'rect'},{key:'c',x:.67,y:.16,w:.25,h:.36,radius:12,shape:'rect'}] },
-  { id:'poetry-filmstrip', name:'Film Strip', category:'Digital Poetry', bg:'#15171a', text:'#ffffff', accent:'#8d86ff', align:'center', x:.14,y:.70,w:.72,size:.040,weight:650, font:FONT_VALUES['Cormorant Garamond'], frames:[{key:'a',x:.08,y:.15,w:.25,h:.34,radius:3,shape:'rect'},{key:'b',x:.375,y:.15,w:.25,h:.34,radius:3,shape:'rect'},{key:'c',x:.67,y:.15,w:.25,h:.34,radius:3,shape:'rect'}] },
-  { id:'poetry-small-center', name:'Small Center Photo', category:'Digital Poetry', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.17,y:.58,w:.66,size:.046,weight:720, font:FONT_VALUES['Playfair Display'], frames:[{key:'main',x:.36,y:.17,w:.28,h:.28,radius:16,shape:'rect'}], quoteMark:true },
-  { id:'poetry-bottom-window', name:'Bottom Window', category:'Digital Poetry', bg:'#f3f4f6', text:'#15171a', accent:'#645cff', align:'center', x:.15,y:.14,w:.70,size:.044,weight:700, font:FONT_VALUES['DM Serif Display'], frames:[{key:'main',x:.18,y:.48,w:.64,h:.34,radius:22,shape:'rect'}] },
-  { id:'poetry-overlap-two', name:'Overlapping Memories', category:'Digital Poetry', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.12,y:.58,w:.48,size:.042,weight:720, font:FONT_VALUES['Inter'], frames:[{key:'back',x:.38,y:.12,w:.42,h:.43,radius:18,shape:'rect',rotation:7},{key:'front',x:.52,y:.24,w:.36,h:.38,radius:18,shape:'rect',rotation:-5}] },
-  { id:'poetry-side-caption', name:'Side Caption', category:'Digital Poetry', bg:'#f7f4ef', text:'#15171a', accent:'#645cff', align:'left', x:.70,y:.18,w:.20,size:.030,weight:620, font:FONT_VALUES['Inter'], frames:[{key:'main',x:.08,y:.12,w:.54,h:.66,radius:0,shape:'rect'}], label:'memory no. 01' },
+  { id:'poetry-center-window', name:'Center Window', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.16,y:.68,w:.68,size:.042,weight:700, font:FONT_VALUES['Playfair Display'], frames:[{key:'main',x:.22,y:.15,w:.56,h:.42,radius:18,shape:'rect'}], label:'a small thought' },
+  { id:'poetry-left-photo', name:'Left Memory', category:'Poetry & Relatable', bg:'#f5f2ed', text:'#15171a', accent:'#645cff', align:'left', x:.55,y:.24,w:.34,size:.042,weight:700, font:FONT_VALUES['Cormorant Garamond'], frames:[{key:'main',x:.08,y:.14,w:.38,h:.62,radius:10,shape:'rect'}] },
+  { id:'poetry-right-photo', name:'Right Memory', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.10,y:.24,w:.35,size:.044,weight:720, font:FONT_VALUES['Libre Baskerville'], frames:[{key:'main',x:.56,y:.14,w:.34,h:.60,radius:24,shape:'rect'}], topLine:true },
+  { id:'poetry-polaroid-note', name:'Polaroid Note', category:'Poetry & Relatable', bg:'#f0efff', text:'#15171a', accent:'#645cff', align:'center', x:.15,y:.73,w:.70,size:.040,weight:680, font:FONT_VALUES['Caveat'], frames:[{key:'main',x:.22,y:.12,w:.56,h:.48,radius:8,shape:'polaroid'}] },
+  { id:'poetry-circle-memory', name:'Circle Memory', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.17,y:.64,w:.66,size:.041,weight:700, font:FONT_VALUES['DM Serif Display'], frames:[{key:'main',x:.28,y:.12,w:.44,h:.44,radius:999,shape:'circle'}] },
+  { id:'poetry-double-memory', name:'Double Memory', category:'Poetry & Relatable', bg:'#f7f7f5', text:'#15171a', accent:'#645cff', align:'center', x:.18,y:.66,w:.64,size:.040,weight:700, font:FONT_VALUES['Inter'], frames:[{key:'a',x:.10,y:.13,w:.36,h:.42,radius:18,shape:'rect'},{key:'b',x:.54,y:.18,w:.36,h:.42,radius:18,shape:'rect'}] },
+  { id:'poetry-three-stills', name:'Three Stills', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.12,y:.68,w:.72,size:.038,weight:680, font:FONT_VALUES['Playfair Display'], frames:[{key:'a',x:.08,y:.12,w:.25,h:.40,radius:12,shape:'rect'},{key:'b',x:.375,y:.08,w:.25,h:.44,radius:12,shape:'rect'},{key:'c',x:.67,y:.16,w:.25,h:.36,radius:12,shape:'rect'}] },
+  { id:'poetry-filmstrip', name:'Film Strip', category:'Poetry & Relatable', bg:'#15171a', text:'#ffffff', accent:'#8d86ff', align:'center', x:.14,y:.70,w:.72,size:.040,weight:650, font:FONT_VALUES['Cormorant Garamond'], frames:[{key:'a',x:.08,y:.15,w:.25,h:.34,radius:3,shape:'rect'},{key:'b',x:.375,y:.15,w:.25,h:.34,radius:3,shape:'rect'},{key:'c',x:.67,y:.15,w:.25,h:.34,radius:3,shape:'rect'}] },
+  { id:'poetry-small-center', name:'Small Center Photo', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.17,y:.58,w:.66,size:.046,weight:720, font:FONT_VALUES['Playfair Display'], frames:[{key:'main',x:.36,y:.17,w:.28,h:.28,radius:16,shape:'rect'}], quoteMark:true },
+  { id:'poetry-bottom-window', name:'Bottom Window', category:'Poetry & Relatable', bg:'#f3f4f6', text:'#15171a', accent:'#645cff', align:'center', x:.15,y:.14,w:.70,size:.044,weight:700, font:FONT_VALUES['DM Serif Display'], frames:[{key:'main',x:.18,y:.48,w:.64,h:.34,radius:22,shape:'rect'}] },
+  { id:'poetry-overlap-two', name:'Overlapping Memories', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.12,y:.58,w:.48,size:.042,weight:720, font:FONT_VALUES['Inter'], frames:[{key:'back',x:.38,y:.12,w:.42,h:.43,radius:18,shape:'rect',rotation:7},{key:'front',x:.52,y:.24,w:.36,h:.38,radius:18,shape:'rect',rotation:-5}] },
+  { id:'poetry-side-caption', name:'Side Caption', category:'Poetry & Relatable', bg:'#f7f4ef', text:'#15171a', accent:'#645cff', align:'left', x:.70,y:.18,w:.20,size:.030,weight:620, font:FONT_VALUES['Inter'], frames:[{key:'main',x:.08,y:.12,w:.54,h:.66,radius:0,shape:'rect'}], label:'memory no. 01' },
+
+
+  { id:'poetry-big-serif', name:'Big Serif Thought', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.10,y:.20,w:.74,size:.066,weight:700, font:FONT_VALUES['Playfair Display'], previewText:'be gentle\nwith yourself', footerStyle:'serif' },
+  { id:'poetry-italic-break', name:'Italic Break', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.14,y:.24,w:.72,size:.058,weight:500, font:FONT_VALUES['Bodoni Moda'], fontStyle:'italic', previewText:'some things\nneed more time', footerStyle:'signature' },
+  { id:'poetry-taglish-serif', name:'Taglish Serif', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.12,y:.22,w:.76,size:.060,weight:700, font:FONT_VALUES['Cormorant Garamond'], previewText:'minsan okay lang\nna mapagod', footerStyle:'tiny' },
+  { id:'poetry-photo-strip-top', name:'Photo Strip Top', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.15,y:.48,w:.70,size:.042,weight:650, font:FONT_VALUES['Libre Baskerville'], frames:[{key:'main',x:.20,y:.17,w:.60,h:.17,radius:0,shape:'rect'}], previewText:'some memories\nstay quietly', footerStyle:'signature' },
+  { id:'poetry-photo-strip-middle', name:'Photo Between Lines', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.16,y:.16,w:.68,size:.038,weight:650, font:FONT_VALUES['Lora'], frames:[{key:'main',x:.18,y:.39,w:.64,h:.18,radius:0,shape:'rect'}], previewText:'i kept going\neven on quiet days', footerStyle:'handwritten' },
+  { id:'poetry-photo-strip-bottom', name:'Photo Strip Bottom', category:'Poetry & Relatable', bg:'#f7f5f0', text:'#15171a', accent:'#645cff', align:'center', x:.14,y:.18,w:.72,size:.043,weight:700, font:FONT_VALUES['Prata'], frames:[{key:'main',x:.17,y:.55,w:.66,h:.18,radius:4,shape:'rect'}], previewText:'you can miss it\nand still move on', footerStyle:'elegant' },
+  { id:'poetry-mixed-emphasis', name:'Serif Emphasis', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', mixed:'poetry-emphasis', x:.10,y:.19,w:.80, fontA:FONT_VALUES['Playfair Display'], fontB:FONT_VALUES['Bodoni Moda'], fontC:FONT_VALUES['Playfair Display'], previewText:'be kind\nwith the little you\ninside you', footerStyle:'signature' },
+  { id:'poetry-mixed-taglish', name:'Taglish Emphasis', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', mixed:'poetry-emphasis', x:.11,y:.20,w:.78, fontA:FONT_VALUES['Cormorant Garamond'], fontB:FONT_VALUES['DM Serif Display'], fontC:FONT_VALUES['Cormorant Garamond'], previewText:'yung gusto mong\npahinga\npero kailangan mo pa rin', footerStyle:'tiny' },
+  { id:'poetry-small-photo-note', name:'Tiny Memory Note', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.24,y:.58,w:.52,size:.034,weight:600, font:FONT_VALUES['Lora'], frames:[{key:'main',x:.36,y:.20,w:.28,h:.22,radius:2,shape:'rect'}], previewText:'a quiet reminder\nfor later', footerStyle:'signature' },
+  { id:'poetry-wide-film', name:'Wide Film Note', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.14,y:.62,w:.72,size:.037,weight:650, font:FONT_VALUES['Cormorant Garamond'], frames:[{key:'main',x:.10,y:.25,w:.80,h:.25,radius:0,shape:'rect'}], previewText:'we grow in ways\nwe do not notice', footerStyle:'elegant' },
+  { id:'poetry-dark-film', name:'Midnight Film', category:'Poetry & Relatable', bg:'#15171a', text:'#ffffff', accent:'#8d86ff', align:'center', x:.15,y:.64,w:.70,size:.040,weight:600, font:FONT_VALUES['Lora'], frames:[{key:'main',x:.12,y:.20,w:.76,h:.30,radius:2,shape:'rect'}], previewText:'some nights\nfeel like old songs', footerStyle:'script-social' },
+  { id:'poetry-soft-letter', name:'Soft Letter', category:'Poetry & Relatable', bg:'#f3f0ea', text:'#15171a', accent:'#645cff', align:'left', x:.16,y:.25,w:.60,size:.042,weight:500, font:FONT_VALUES['Lora'], previewText:'dear you,\nyou made it here.', footerStyle:'signature' },
+  { id:'poetry-cursive-note', name:'Cursive Note', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.18,y:.30,w:.64,size:.052,weight:500, font:FONT_VALUES['Dancing Script'], previewText:'take your time,\nplease.', footerStyle:'tiny' },
+  { id:'poetry-handwritten-photo', name:'Handwritten Memory', category:'Poetry & Relatable', bg:'#f0efff', text:'#15171a', accent:'#645cff', align:'center', x:.14,y:.66,w:.72,size:.044,weight:700, font:FONT_VALUES['Caveat'], frames:[{key:'main',x:.23,y:.14,w:.54,h:.40,radius:14,shape:'rect'}], previewText:'some places\nfeel like home', footerStyle:'handwritten' },
+  { id:'poetry-left-quiet', name:'Quiet Left', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.10,y:.31,w:.48,size:.046,weight:650, font:FONT_VALUES['Libre Baskerville'], previewText:'not every ending\nneeds an answer', footerStyle:'serif' },
+  { id:'poetry-right-quiet', name:'Quiet Right', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'right', x:.40,y:.32,w:.50,size:.046,weight:650, font:FONT_VALUES['Libre Baskerville'], previewText:'some peace\nlooks like distance', footerStyle:'tiny' },
+  { id:'poetry-large-small', name:'Large + Small', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', mixed:'two', x:.10,y:.22,w:.80, fontA:FONT_VALUES['DM Serif Display'], fontB:FONT_VALUES['Inter'], previewText:'you survived\nmore than you say', footerStyle:'signature' },
+  { id:'poetry-script-modern', name:'Script + Serif', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', mixed:'two', x:.12,y:.25,w:.76, fontA:FONT_VALUES['Great Vibes'], fontB:FONT_VALUES['Playfair Display'], previewText:'little things\nstill matter', footerStyle:'social' },
+  { id:'poetry-three-tone', name:'Three Tone', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', mixed:'three', x:.09,y:.18,w:.82, fontA:FONT_VALUES['Bebas Neue'], fontB:FONT_VALUES['Cormorant Garamond'], fontC:FONT_VALUES['Inter'], previewText:'KEEP GOING\neven when quiet\ndays feel heavy', footerStyle:'tiny' },
+  { id:'poetry-faded-word', name:'Faded Feeling', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.16,y:.38,w:.68,size:.048,weight:700, font:FONT_VALUES['Playfair Display'], effect:'watermark', previewText:'healing can be\nvery quiet', footerStyle:'signature' },
+  { id:'poetry-repeat-soft', name:'Repeated Thought', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.15,y:.36,w:.70,size:.045,weight:700, font:FONT_VALUES['Inter'], effect:'repeat', previewText:'stay soft\nstay true', footerStyle:'tiny' },
+  { id:'poetry-outline-note', name:'Outline Whisper', category:'Poetry & Relatable', bg:'#f0efff', text:'#15171a', accent:'#645cff', align:'center', x:.14,y:.31,w:.72,size:.056,weight:900, font:FONT_VALUES['Bebas Neue'], effect:'outline', previewText:'STILL HERE', footerStyle:'script-social' },
+  { id:'poetry-two-photo-story', name:'Two Photo Story', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.16,y:.66,w:.68,size:.038,weight:650, font:FONT_VALUES['Lora'], frames:[{key:'a',x:.12,y:.16,w:.34,h:.36,radius:6,shape:'rect'},{key:'b',x:.54,y:.16,w:.34,h:.36,radius:6,shape:'rect'}], previewText:'two places,\none feeling', footerStyle:'signature' },
+  { id:'poetry-photo-stack', name:'Stacked Memories', category:'Poetry & Relatable', bg:'#f7f5f0', text:'#15171a', accent:'#645cff', align:'left', x:.12,y:.64,w:.50,size:.040,weight:650, font:FONT_VALUES['Cormorant Garamond'], frames:[{key:'back',x:.24,y:.12,w:.48,h:.38,radius:4,shape:'rect',rotation:5},{key:'front',x:.38,y:.25,w:.46,h:.36,radius:4,shape:'rect',rotation:-4}], previewText:'the same memory\nchanges with time', footerStyle:'handwritten' },
+  { id:'poetry-circle-note', name:'Circle Poetry', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.18,y:.65,w:.64,size:.040,weight:650, font:FONT_VALUES['Prata'], frames:[{key:'main',x:.31,y:.15,w:.38,h:.38,radius:999,shape:'circle'}], previewText:'you looked happy\nthere', footerStyle:'elegant' },
+  { id:'poetry-arch-note', name:'Arch Memory', category:'Poetry & Relatable', bg:'#f0efff', text:'#15171a', accent:'#645cff', align:'center', x:.15,y:.67,w:.70,size:.040,weight:650, font:FONT_VALUES['Playfair Display'], frames:[{key:'main',x:.27,y:.11,w:.46,h:.46,radius:180,shape:'arch'}], previewText:'some memories\narrive softly', footerStyle:'signature' },
+  { id:'poetry-long-paragraph', name:'Long Thought', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.12,y:.18,w:.72,size:.037,weight:650, font:FONT_VALUES['Lora'], previewText:'you do not need to have every answer today. sometimes continuing is already enough.', footerStyle:'tiny' },
+  { id:'poetry-bottom-credit', name:'Bottom Credit', category:'Poetry & Relatable', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.16,y:.30,w:.68,size:.050,weight:700, font:FONT_VALUES['Bodoni Moda'], previewText:'you can begin\nagain quietly', footerStyle:'editorial' },
 
   // PHOTO FRAME COMPOSITIONS
   { id:'frames-hero-center', name:'Hero Center', category:'Photo Frames', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.14,y:.72,w:.72,size:.045,weight:760, font:FONT_VALUES['Inter'], frames:[{key:'main',x:.16,y:.10,w:.68,h:.50,radius:26,shape:'rect'}] },
@@ -286,7 +396,8 @@ function makeTextLayer({
   shadowX,
   shadowY,
   uppercase,
-  blendMode
+  blendMode,
+  fontStyle = 'normal'
 }) {
   return {
     id: nextId(),
@@ -313,7 +424,8 @@ function makeTextLayer({
     shadowX,
     shadowY,
     uppercase,
-    blendMode
+    blendMode,
+    fontStyle
   };
 }
 
@@ -344,6 +456,7 @@ function makeFrameLayer({ slotKey, x, y, width, height, radius = 20, rotation = 
     opacity: 1,
     frameFill: dark ? rgba('#ffffff', 0.08) : rgba(BRAND.accent, 0.07),
     frameStroke: dark ? rgba('#ffffff', 0.22) : rgba(BRAND.accent, 0.20),
+    aspectLocked: true,
     z
   };
 }
@@ -356,6 +469,30 @@ function makePhotoPlaceholder(slot, width, height, dark = false, slotKey = 'phot
   if (slot === 'polaroid') return makeFrameLayer({ slotKey, x: width * 0.20, y: height * 0.12, width: width * 0.60, height: height * 0.44, radius: 8, shape: 'polaroid', dark });
   if (slot === 'banner') return makeFrameLayer({ slotKey, x: width * 0.08, y: height * 0.16, width: width * 0.84, height: height * 0.18, radius: 24, dark });
   return makeFrameLayer({ slotKey, x: width * 0.08, y: height * 0.08, width: width * 0.84, height: height * 0.38, radius: 22, dark });
+}
+
+function estimateLineCount(text, width, fontSize) {
+  const safeWidth = Math.max(80, width || 80);
+  const safeSize = Math.max(12, fontSize || 12);
+  const charsPerLine = Math.max(5, Math.floor(safeWidth / (safeSize * 0.52)));
+  return String(text || '').split('\n').reduce((total, paragraph) => {
+    const length = Math.max(1, paragraph.trim().length);
+    return total + Math.max(1, Math.ceil(length / charsPerLine));
+  }, 0);
+}
+
+function adaptiveLineHeight(text, width, fontSize, base = 1.12) {
+  const lines = estimateLineCount(text, width, fontSize);
+  if (lines <= 2) return base;
+  if (lines === 3) return Math.max(0.98, base - 0.08);
+  if (lines === 4) return Math.max(0.90, base - 0.16);
+  if (lines === 5) return Math.max(0.82, base - 0.24);
+  if (lines === 6) return Math.max(0.76, base - 0.30);
+  return Math.max(0.68, base - 0.38);
+}
+
+function estimatedTextHeight(text, width, fontSize, lineHeight) {
+  return estimateLineCount(text, width, fontSize) * fontSize * lineHeight;
 }
 
 function makeQuoteLayer(template, width, height, text = starterQuote) {
@@ -371,8 +508,9 @@ function makeQuoteLayer(template, width, height, text = starterQuote) {
     z: 10,
     fontFamily: template.font || defaultFont,
     letterSpacing: template.letterSpacing || 0,
-    lineHeight: template.lineHeight || 1.12,
-    uppercase: template.uppercase || false
+    lineHeight: adaptiveLineHeight(text, Math.round(template.w * width), Math.max(26, Math.round(template.size * Math.min(width, height))), template.lineHeight || 1.12),
+    uppercase: template.uppercase || false,
+    fontStyle: template.fontStyle || 'normal'
   });
 
   switch (template.effect) {
@@ -588,13 +726,28 @@ function templateDecorations(template, width, height, quoteText) {
 
 function buildTemplateLayers(template, width, height, quoteText) {
   const base = templateDecorations(template, width, height, quoteText);
+  const minDim = Math.min(width, height);
 
   if (template.mixed === 'two') {
     const [a, b] = splitForMix(quoteText, 2);
-    const layer1 = makeTextLayer({ text: a, x: width * (template.x || 0.12), y: height * (template.y || 0.22), width: width * (template.w || 0.76), fontSize: Math.round(Math.min(width, height) * 0.085), weight: 700, color: template.text, align: 'left', z: 10, fontFamily: template.fontA, lineHeight: 0.95 });
-    const layer2 = makeTextLayer({ text: b, x: width * (template.x || 0.12), y: layer1.y + layer1.fontSize * 1.6, width: width * (template.w || 0.76), fontSize: Math.round(Math.min(width, height) * 0.048), weight: 800, color: template.accent, align: 'left', z: 11, fontFamily: template.fontB, lineHeight: 1.15, uppercase: false, letterSpacing: 1 });
+    const x = width * (template.x || 0.12);
+    const y = height * (template.y || 0.22);
+    const w = width * (template.w || 0.76);
+    const fs1 = Math.round(minDim * 0.085);
+    const fs2 = Math.round(minDim * 0.048);
+    const lh1 = adaptiveLineHeight(a, w, fs1, 0.98);
+    const lh2 = adaptiveLineHeight(b, w, fs2, 1.10);
+    const h1 = estimatedTextHeight(a, w, fs1, lh1);
+    const h2 = estimatedTextHeight(b, w, fs2, lh2);
+    const density = estimateLineCount(a, w, fs1) + estimateLineCount(b, w, fs2);
+    const gap = clamp(height * (0.055 - Math.max(0, density - 4) * 0.008), height * 0.008, height * 0.055);
+    const layer1 = makeTextLayer({ text: a, x, y, width: w, fontSize: fs1, weight: 700, color: template.text, align: template.align || 'left', z: 10, fontFamily: template.fontA, lineHeight: lh1, fontStyle: template.fontStyleA || 'normal' });
+    const layer2 = makeTextLayer({ text: b, x, y: y + h1 + gap, width: w, fontSize: fs2, weight: 800, color: template.accent, align: template.align || 'left', z: 11, fontFamily: template.fontB, lineHeight: lh2, uppercase: false, letterSpacing: 1, fontStyle: template.fontStyleB || 'normal' });
     layer1.role = 'quote';
     layer2.role = 'quote-secondary';
+    layer1.autoSpacing = true;
+    layer2.autoSpacing = true;
+    layer2.maxSuggestedBottom = y + h1 + gap + h2;
     return [...base, layer1, layer2];
   }
 
@@ -603,12 +756,48 @@ function buildTemplateLayers(template, width, height, quoteText) {
     const x = width * (template.x || 0.12);
     const y = height * (template.y || 0.18);
     const w = width * (template.w || 0.76);
-    const l1 = makeTextLayer({ text: a, x, y, width: w, fontSize: Math.round(Math.min(width, height) * 0.095), weight: 900, color: template.text, align: 'left', z: 10, fontFamily: template.fontA, uppercase: true, lineHeight: 0.90 });
-    const l2 = makeTextLayer({ text: b, x, y: y + l1.fontSize * 1.10, width: w, fontSize: Math.round(Math.min(width, height) * 0.055), weight: 700, color: template.accent, align: 'left', z: 11, fontFamily: template.fontB, lineHeight: 1.02 });
-    const l3 = makeTextLayer({ text: c, x, y: y + l1.fontSize * 1.95, width: w, fontSize: Math.round(Math.min(width, height) * 0.045), weight: 700, color: template.text, align: 'left', z: 12, fontFamily: template.fontC || defaultFont, lineHeight: 1.18 });
+    const fs1 = Math.round(minDim * 0.095);
+    const fs2 = Math.round(minDim * 0.055);
+    const fs3 = Math.round(minDim * 0.045);
+    const lh1 = adaptiveLineHeight(a, w, fs1, 0.92);
+    const lh2 = adaptiveLineHeight(b, w, fs2, 1.02);
+    const lh3 = adaptiveLineHeight(c, w, fs3, 1.12);
+    const h1 = estimatedTextHeight(a, w, fs1, lh1);
+    const h2 = estimatedTextHeight(b, w, fs2, lh2);
+    const density = estimateLineCount(a, w, fs1) + estimateLineCount(b, w, fs2) + estimateLineCount(c, w, fs3);
+    const gap = clamp(height * (0.040 - Math.max(0, density - 5) * 0.005), height * 0.006, height * 0.040);
+    const l1 = makeTextLayer({ text: a, x, y, width: w, fontSize: fs1, weight: 900, color: template.text, align: template.align || 'left', z: 10, fontFamily: template.fontA, uppercase: true, lineHeight: lh1, fontStyle: template.fontStyleA || 'normal' });
+    const l2 = makeTextLayer({ text: b, x, y: y + h1 + gap, width: w, fontSize: fs2, weight: 700, color: template.accent, align: template.align || 'left', z: 11, fontFamily: template.fontB, lineHeight: lh2, fontStyle: template.fontStyleB || 'normal' });
+    const l3 = makeTextLayer({ text: c, x, y: y + h1 + gap + h2 + gap, width: w, fontSize: fs3, weight: 700, color: template.text, align: template.align || 'left', z: 12, fontFamily: template.fontC || defaultFont, lineHeight: lh3, fontStyle: template.fontStyleC || 'normal' });
     l1.role = 'quote';
     l2.role = 'quote-secondary';
     l3.role = 'quote-tertiary';
+    l1.autoSpacing = l2.autoSpacing = l3.autoSpacing = true;
+    return [...base, l1, l2, l3];
+  }
+
+  if (template.mixed === 'poetry-emphasis') {
+    const [a, b, c] = splitForMix(quoteText, 3);
+    const x = width * (template.x || 0.12);
+    const y = height * (template.y || 0.20);
+    const w = width * (template.w || 0.76);
+    const fs1 = Math.round(minDim * 0.060);
+    const fs2 = Math.round(minDim * 0.072);
+    const fs3 = Math.round(minDim * 0.058);
+    const lh1 = adaptiveLineHeight(a, w, fs1, 1.00);
+    const lh2 = adaptiveLineHeight(b, w, fs2, 0.92);
+    const lh3 = adaptiveLineHeight(c, w, fs3, 1.00);
+    const h1 = estimatedTextHeight(a, w, fs1, lh1);
+    const h2 = estimatedTextHeight(b, w, fs2, lh2);
+    const totalLines = estimateLineCount(a, w, fs1) + estimateLineCount(b, w, fs2) + estimateLineCount(c, w, fs3);
+    const gap = clamp(height * (0.045 - Math.max(0, totalLines - 5) * 0.006), height * 0.004, height * 0.045);
+    const l1 = makeTextLayer({ text: a, x, y, width: w, fontSize: fs1, weight: 650, color: template.text, align: template.align || 'center', z: 10, fontFamily: template.fontA || FONT_VALUES['Playfair Display'], lineHeight: lh1 });
+    const l2 = makeTextLayer({ text: b, x, y: y + h1 + gap, width: w, fontSize: fs2, weight: 600, color: template.text, align: template.align || 'center', z: 11, fontFamily: template.fontB || FONT_VALUES['Bodoni Moda'], lineHeight: lh2, fontStyle: 'italic' });
+    const l3 = makeTextLayer({ text: c, x, y: y + h1 + gap + h2 + gap, width: w, fontSize: fs3, weight: 650, color: template.text, align: template.align || 'center', z: 12, fontFamily: template.fontC || FONT_VALUES['Playfair Display'], lineHeight: lh3 });
+    l1.role = 'quote';
+    l2.role = 'quote-secondary';
+    l3.role = 'quote-tertiary';
+    l1.autoSpacing = l2.autoSpacing = l3.autoSpacing = true;
     return [...base, l1, l2, l3];
   }
 
@@ -616,16 +805,30 @@ function buildTemplateLayers(template, width, height, quoteText) {
     const words = splitForMix(quoteText, 3).map((part) => part.toUpperCase());
     const x = width * 0.10;
     const y = height * 0.18;
-    const first = makeTextLayer({ text: words[0], x, y, width: width * 0.56, fontSize: Math.round(Math.min(width, height) * 0.12), weight: 900, color: template.text, align: 'left', z: 10, fontFamily: template.font, lineHeight: 0.88, uppercase: true });
-    const second = makeTextLayer({ text: words[1], x: x + width * 0.08, y: y + first.fontSize * 0.95, width: width * 0.58, fontSize: Math.round(Math.min(width, height) * 0.10), weight: 900, color: template.accent, align: 'left', z: 11, fontFamily: template.font, lineHeight: 0.88, uppercase: true });
-    const third = makeTextLayer({ text: words[2], x: x + width * 0.16, y: second.y + second.fontSize * 0.95, width: width * 0.62, fontSize: Math.round(Math.min(width, height) * 0.08), weight: 900, color: template.text, align: 'left', z: 12, fontFamily: template.font, lineHeight: 0.90, uppercase: true });
+    const w1 = width * 0.56;
+    const w2 = width * 0.58;
+    const w3 = width * 0.62;
+    const fs1 = Math.round(minDim * 0.12);
+    const fs2 = Math.round(minDim * 0.10);
+    const fs3 = Math.round(minDim * 0.08);
+    const lh1 = adaptiveLineHeight(words[0], w1, fs1, 0.88);
+    const lh2 = adaptiveLineHeight(words[1], w2, fs2, 0.88);
+    const h1 = estimatedTextHeight(words[0], w1, fs1, lh1);
+    const h2 = estimatedTextHeight(words[1], w2, fs2, lh2);
+    const gap = height * 0.008;
+    const first = makeTextLayer({ text: words[0], x, y, width: w1, fontSize: fs1, weight: 900, color: template.text, align: 'left', z: 10, fontFamily: template.font, lineHeight: lh1, uppercase: true });
+    const second = makeTextLayer({ text: words[1], x: x + width * 0.08, y: y + h1 + gap, width: w2, fontSize: fs2, weight: 900, color: template.accent, align: 'left', z: 11, fontFamily: template.font, lineHeight: lh2, uppercase: true });
+    const third = makeTextLayer({ text: words[2], x: x + width * 0.16, y: second.y + h2 + gap, width: w3, fontSize: fs3, weight: 900, color: template.text, align: 'left', z: 12, fontFamily: template.font, lineHeight: adaptiveLineHeight(words[2], w3, fs3, 0.90), uppercase: true });
     first.role = 'quote';
     second.role = 'quote-secondary';
     third.role = 'quote-tertiary';
+    first.autoSpacing = second.autoSpacing = third.autoSpacing = true;
     return [...base, first, second, third];
   }
 
-  return [...base, makeQuoteLayer(template, width, height, quoteText)];
+  const quote = makeQuoteLayer(template, width, height, quoteText);
+  quote.autoSpacing = true;
+  return [...base, quote];
 }
 
 function makeTemplateState(templateId, sizeKey, quoteText = starterQuote) {
@@ -638,12 +841,73 @@ function makeTemplateState(templateId, sizeKey, quoteText = starterQuote) {
   };
 }
 
-function FacebookBrand({ dark = false }) {
+function BrandMark({ dark = false, styleKey = 'social', mini = false }) {
+  const style = BRAND_STYLES[styleKey] || BRAND_STYLES.social;
+  const iconText = style.icon === 'k' ? 'k' : 'f';
   return (
-    <div className={`brandMark ${dark ? 'brandMarkDark' : ''}`}>
-      <span className="fbCircle">f</span>
-      <span>kiocreates</span>
+    <div
+      className={`brandMark brand-${styleKey} ${dark ? 'brandMarkDark' : ''} ${mini ? 'brandMini' : ''}`}
+      style={{ fontFamily: style.fontFamily, fontWeight: style.weight, letterSpacing: `${style.letterSpacing || 0}px`, fontSize: mini ? undefined : `calc(2.45cqw * ${style.scale || 1})` }}
+    >
+      {style.icon !== 'none' && <span className={`fbCircle ${style.icon === 'k' ? 'monogramCircle' : ''}`}>{iconText}</span>}
+      <span>{style.text}</span>
     </div>
+  );
+}
+
+function TemplateMiniPreview({ template }) {
+  const width = 1080;
+  const height = 1080;
+  const sample = template.previewText || (template.category === 'Poetry & Relatable' ? 'some days\nneed softness' : 'make it feel\nlike you');
+  const miniLayers = buildTemplateLayers(template, width, height, sample);
+  const styleKey = footerStyleForTemplate(template);
+  const dark = ['#15171a', '#645cff', '#28233f', '#1b1235', '#162134'].includes(String(template.bg).toLowerCase());
+  return (
+    <span className="templatePreview actualTemplatePreview" style={{ background: template.gradient ? 'linear-gradient(135deg,#fff,#f0efff,#e8e6ff)' : template.bg, color: template.text }}>
+      {[...miniLayers].sort((a, b) => (a.z || 0) - (b.z || 0)).map((layer) => {
+        const common = {
+          left: `${(layer.x / width) * 100}%`,
+          top: `${(layer.y / height) * 100}%`,
+          width: `${(layer.width / width) * 100}%`,
+          opacity: layer.opacity ?? 1,
+          transform: `rotate(${layer.rotation || 0}deg)`,
+          zIndex: layer.z || 1
+        };
+        if (layer.type === 'shape' || layer.type === 'block') {
+          return <span key={layer.id} className="miniShape" style={{ ...common, height: `${(layer.height / height) * 100}%`, background: layer.fill, border: `1px solid ${layer.stroke || 'transparent'}`, borderRadius: `${Math.min(18, layer.radius || 0)}px` }} />;
+        }
+        if (layer.type === 'frame') {
+          const radius = layer.frameShape === 'circle' ? '50%' : layer.frameShape === 'arch' ? '50% 50% 8px 8px / 45% 45% 8px 8px' : `${Math.min(16, layer.radius || 0)}px`;
+          return <span key={layer.id} className="miniFrame" style={{ ...common, height: `${(layer.height / height) * 100}%`, borderRadius: radius }}><span className="miniPhotoShimmer" /></span>;
+        }
+        if (layer.type === 'text') {
+          return (
+            <span
+              key={layer.id}
+              className="miniText"
+              style={{
+                ...common,
+                fontFamily: layer.fontFamily || defaultFont,
+                fontWeight: layer.weight,
+                fontStyle: layer.fontStyle || 'normal',
+                fontSize: `${Math.max(4.5, (layer.fontSize / width) * 100)}cqw`,
+                lineHeight: layer.lineHeight || 1.05,
+                color: layer.color,
+                textAlign: layer.align || 'left',
+                letterSpacing: layer.letterSpacing ? `${layer.letterSpacing / 5}px` : undefined,
+                WebkitTextStroke: layer.strokeColor && layer.strokeWidth ? `${Math.max(0.2, layer.strokeWidth / 5)}px ${layer.strokeColor}` : undefined,
+                textShadow: layer.shadowColor ? `${(layer.shadowX || 0) / 6}px ${(layer.shadowY || 0) / 6}px ${(layer.shadowBlur || 0) / 6}px ${layer.shadowColor}` : undefined,
+                textTransform: layer.uppercase ? 'uppercase' : undefined
+              }}
+            >
+              {layer.uppercase ? String(layer.text || '').toUpperCase() : layer.text}
+            </span>
+          );
+        }
+        return null;
+      })}
+      <span className="miniBrandWrap"><BrandMark dark={dark} styleKey={styleKey} mini /></span>
+    </span>
   );
 }
 
@@ -746,7 +1010,7 @@ const loadImg = (src) => new Promise((resolve, reject) => {
 });
 
 function layerFontString(layer) {
-  return `${layer.weight || 700} ${layer.fontSize}px ${layer.fontFamily || defaultFont}`;
+  return `${layer.fontStyle || 'normal'} ${layer.weight || 700} ${layer.fontSize}px ${layer.fontFamily || defaultFont}`;
 }
 
 export default function TypographyStudio() {
@@ -763,10 +1027,15 @@ export default function TypographyStudio() {
   const [backgroundPhotoBlend, setBackgroundPhotoBlend] = useState('normal');
   const [backgroundPhotoBlur, setBackgroundPhotoBlur] = useState(0);
   const [backgroundPhotoPlacement, setBackgroundPhotoPlacement] = useState('full');
+  const [backgroundPhotoScale, setBackgroundPhotoScale] = useState(1);
+  const [backgroundPhotoPositionX, setBackgroundPhotoPositionX] = useState(50);
+  const [backgroundPhotoPositionY, setBackgroundPhotoPositionY] = useState(50);
   const [layers, setLayers] = useState(initial.layers);
   const [selectedId, setSelectedId] = useState(initial.layers.find((l) => l.role === 'quote')?.id || null);
   const [brandPosition, setBrandPosition] = useState('bottom-left');
   const [brandVisible, setBrandVisible] = useState(true);
+  const [brandStyleKey, setBrandStyleKey] = useState('social');
+  const [newFrameShape, setNewFrameShape] = useState('rect');
   const [quality, setQuality] = useState(92);
   const [exporting, setExporting] = useState(false);
   const [templateLocked, setTemplateLocked] = useState(true);
@@ -806,7 +1075,13 @@ export default function TypographyStudio() {
     });
     setTemplateId(id);
     setMode('template');
-    if (id !== templateId || key !== sizeKey) setTemplateLocked(true);
+    const chosenTemplate = templates.find((item) => item.id === id) || templates[0];
+    const switchingTemplate = id !== templateId || key !== sizeKey;
+    if (switchingTemplate) {
+      setBrandStyleKey(footerStyleForTemplate(chosenTemplate));
+      if (chosenTemplate.footerPosition) setBrandPosition(chosenTemplate.footerPosition);
+      setTemplateLocked(true);
+    }
     setBackground(next.background);
     setGradient(next.gradient);
     setLayers(next.layers);
@@ -870,6 +1145,7 @@ export default function TypographyStudio() {
         rotation: 0,
         opacity: 1,
         blendMode: 'normal',
+        aspectLocked: true,
         z: Math.max(10, ...layers.map((l) => l.z || 1)) + 1
       };
       setLayers((p) => [...p, layer]);
@@ -897,10 +1173,41 @@ export default function TypographyStudio() {
     setSelectedId(layer.id);
   };
 
+  const addFrame = (shape = newFrameShape) => {
+    const presets = {
+      rect: { w: 0.60, h: 0.38, radius: 0, frameShape: 'rect' },
+      rounded: { w: 0.60, h: 0.38, radius: 34, frameShape: 'rect' },
+      circle: { w: 0.42, h: 0.42, radius: 999, frameShape: 'circle' },
+      arch: { w: 0.46, h: 0.54, radius: 180, frameShape: 'arch' },
+      polaroid: { w: 0.48, h: 0.54, radius: 8, frameShape: 'polaroid' },
+      film: { w: 0.72, h: 0.24, radius: 3, frameShape: 'rect' }
+    };
+    const preset = presets[shape] || presets.rect;
+    const frame = makeFrameLayer({
+      slotKey: `custom-${Date.now()}`,
+      x: canvasWidth * (0.5 - preset.w / 2),
+      y: canvasHeight * (0.5 - preset.h / 2),
+      width: canvasWidth * preset.w,
+      height: canvasHeight * preset.h,
+      radius: preset.radius,
+      shape: preset.frameShape,
+      z: Math.max(4, ...layers.map((l) => l.z || 1)) + 1
+    });
+    frame.templateOwned = false;
+    frame.locked = false;
+    frame.aspectLocked = true;
+    frame.customFrameKind = shape;
+    setLayers((prev) => [...prev, frame]);
+    setSelectedId(frame.id);
+  };
+
   const addBackgroundPhoto = (file) => {
     if (!file) return;
     const url = URL.createObjectURL(file);
     setBackgroundPhoto(url);
+    setBackgroundPhotoScale(1);
+    setBackgroundPhotoPositionX(50);
+    setBackgroundPhotoPositionY(50);
     setGradient(false);
   };
 
@@ -958,7 +1265,9 @@ export default function TypographyStudio() {
       y: layer.y,
       width: layer.width,
       height: layer.height,
-      fontSize: layer.fontSize
+      fontSize: layer.fontSize,
+      aspectLocked: layer.aspectLocked !== false,
+      aspectRatio: layer.width && layer.height ? layer.width / layer.height : 1
     };
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', endDrag, { once: true });
@@ -981,7 +1290,16 @@ export default function TypographyStudio() {
       if (l.id !== d.id) return l;
       if (d.kind === 'move') return { ...l, x: clamp(d.x + dx, -l.width * 0.75, canvasWidth - l.width * 0.25), y: clamp(d.y + dy, -120, canvasHeight - 40) };
       if (d.kind === 'resize') {
-        if (['image', 'frame', 'block'].includes(l.type)) return { ...l, width: Math.max(80, d.width + dx), height: Math.max(80, d.height + dy) };
+        if (['image', 'frame', 'block'].includes(l.type)) {
+          if (l.type !== 'block' && d.aspectLocked) {
+            const scaleByWidth = (d.width + dx) / Math.max(1, d.width);
+            const scaleByHeight = (d.height + dy) / Math.max(1, d.height);
+            const scaleFactor = Math.abs(dx / Math.max(1, d.width)) >= Math.abs(dy / Math.max(1, d.height)) ? scaleByWidth : scaleByHeight;
+            const safeScale = Math.max(80 / Math.max(1, d.width), 80 / Math.max(1, d.height), scaleFactor);
+            return { ...l, width: Math.max(80, d.width * safeScale), height: Math.max(80, d.height * safeScale) };
+          }
+          return { ...l, width: Math.max(80, d.width + dx), height: Math.max(80, d.height + dy) };
+        }
         const ratio = Math.max(0.35, (d.width + dx) / Math.max(1, d.width));
         return { ...l, width: Math.max(140, d.width + dx), fontSize: clamp(d.fontSize * ratio, 16, 240) };
       }
@@ -996,32 +1314,40 @@ export default function TypographyStudio() {
 
   const drawBrand = (ctx) => {
     if (!brandVisible) return;
+    const style = BRAND_STYLES[brandStyleKey] || BRAND_STYLES.social;
     const padding = Math.round(Math.min(canvasWidth, canvasHeight) * 0.045);
-    const fs = Math.round(Math.min(canvasWidth, canvasHeight) * 0.025);
-    ctx.font = `800 ${fs}px ${defaultFont}`;
-    const text = 'kiocreates';
+    const baseFs = Math.round(Math.min(canvasWidth, canvasHeight) * 0.025);
+    const fs = Math.round(baseFs * (style.scale || 1));
+    const darkBg = ['#15171a', '#645cff', '#28233f', '#1b1235', '#162134'].includes(String(background).toLowerCase());
+    const text = style.text;
+    ctx.font = `${style.weight || 700} ${fs}px ${style.fontFamily || defaultFont}`;
     const tw = ctx.measureText(text).width;
-    const circle = fs * 1.12;
-    const gap = fs * 0.45;
+    const hasIcon = style.icon !== 'none';
+    const circle = hasIcon ? fs * 1.12 : 0;
+    const gap = hasIcon ? fs * 0.42 : 0;
     const total = circle + gap + tw;
     let x = padding;
     if (brandPosition === 'bottom-center') x = (canvasWidth - total) / 2;
     if (brandPosition === 'bottom-right') x = canvasWidth - padding - total;
-    const y = canvasHeight - padding - circle / 2;
-    const darkBg = ['#15171a', '#645cff', '#28233f'].includes(String(background).toLowerCase());
-    ctx.fillStyle = darkBg ? '#ffffff' : BRAND.accent;
-    ctx.beginPath();
-    ctx.arc(x + circle / 2, y, circle / 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = darkBg ? BRAND.accent : '#ffffff';
-    ctx.font = `900 ${fs * 0.88}px Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('f', x + circle / 2, y + fs * 0.05);
+    const y = canvasHeight - padding - Math.max(circle, fs) / 2;
+
+    if (hasIcon) {
+      ctx.fillStyle = darkBg ? '#ffffff' : BRAND.accent;
+      ctx.beginPath();
+      ctx.arc(x + circle / 2, y, circle / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = darkBg ? BRAND.accent : '#ffffff';
+      ctx.font = `900 ${fs * 0.86}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(style.icon === 'k' ? 'k' : 'f', x + circle / 2, y + fs * 0.04);
+    }
+
     ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
     ctx.fillStyle = darkBg ? '#ffffff' : BRAND.text;
-    ctx.font = `800 ${fs}px ${defaultFont}`;
-    ctx.fillText(text, x + circle + gap, y + fs * 0.08);
+    ctx.font = `${style.weight || 700} ${fs}px ${style.fontFamily || defaultFont}`;
+    ctx.fillText(text, x + circle + gap, y + fs * 0.03);
   };
 
   const drawTextToCanvas = (ctx, layer) => {
@@ -1062,6 +1388,7 @@ export default function TypographyStudio() {
   const exportImage = async (format) => {
     setExporting(true);
     try {
+      if (document.fonts?.ready) await document.fonts.ready;
       const canvas = document.createElement('canvas');
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
@@ -1087,7 +1414,7 @@ export default function TypographyStudio() {
           ctx.beginPath();
           ctx.rect(rect.x, rect.y, rect.width, rect.height);
           ctx.clip();
-          drawImageIntoRect(ctx, bgImage, rect.x, rect.y, rect.width, rect.height, 'cover', 50, 50, 1);
+          drawImageIntoRect(ctx, bgImage, rect.x, rect.y, rect.width, rect.height, 'cover', backgroundPhotoPositionX, backgroundPhotoPositionY, backgroundPhotoScale);
           ctx.restore();
         } catch {}
       }
@@ -1150,6 +1477,11 @@ export default function TypographyStudio() {
     mixBlendMode: backgroundPhotoBlend,
     filter: backgroundPhotoBlur ? `blur(${backgroundPhotoBlur}px)` : undefined
   };
+  const bgPhotoImageStyle = {
+    objectPosition: `${backgroundPhotoPositionX}% ${backgroundPhotoPositionY}%`,
+    transform: `scale(${backgroundPhotoScale})`,
+    transformOrigin: `${backgroundPhotoPositionX}% ${backgroundPhotoPositionY}%`
+  };
   const selectedTransformLocked = selected ? layerMovementLocked(selected) : false;
 
   const quoteLayer = layers.find((l) => l.role === 'quote');
@@ -1173,6 +1505,7 @@ export default function TypographyStudio() {
     lineHeight: layer.lineHeight || 1.12,
     letterSpacing: layer.letterSpacing ? `${layer.letterSpacing}px` : undefined,
     fontFamily: layer.fontFamily || defaultFont,
+    fontStyle: layer.fontStyle || 'normal',
     WebkitTextStroke: layer.strokeColor && layer.strokeWidth ? `${layer.strokeWidth}px ${layer.strokeColor}` : undefined,
     textShadow: layer.shadowColor ? `${layer.shadowX || 0}px ${layer.shadowY || 0}px ${layer.shadowBlur || 0}px ${layer.shadowColor}` : undefined,
     textTransform: layer.uppercase ? 'uppercase' : undefined,
@@ -1239,11 +1572,7 @@ export default function TypographyStudio() {
                   <div className="templateGrid">
                     {group.items.map((t) => (
                       <button key={t.id} className={`templateTile ${templateId === t.id ? 'active' : ''}`} onClick={() => applyTemplate(t.id)}>
-                        <span className="templatePreview" style={{ background: t.gradient ? 'linear-gradient(135deg,#fff,#f0efff,#e8e6ff)' : t.bg, color: t.text }}>
-                          <i style={{ background: t.accent }} />
-                          <b style={{ fontFamily: t.fontA || t.font || defaultFont }}>{t.frames ? '▧' : t.mixed ? 'Ab' : t.effect ? 'FX' : 'Aa'}</b>
-                          {(t.effect || t.mixed || t.frames) && <em>{t.frames ? `${t.frames.length} photo slot${t.frames.length > 1 ? 's' : ''}` : t.effect ? t.effect.replace('-', ' ') : `${t.mixed} mix`}</em>}
-                        </span>
+                        <TemplateMiniPreview template={t} />
                         <span>{t.name}</span>
                       </button>
                     ))}
@@ -1259,17 +1588,23 @@ export default function TypographyStudio() {
               <button className="secondaryBtn" onClick={addText}>+ Text</button>
               <button className="secondaryBtn" onClick={() => fileRef.current?.click()}>+ Pictures</button>
               <button className="secondaryBtn" onClick={addBlock}>+ Block</button>
-              <input ref={fileRef} hidden multiple type="file" accept="image/*" onChange={(e) => { Array.from(e.target.files || []).forEach(addImage); e.target.value = ''; }} />
-              <input ref={frameFileRef} hidden type="file" accept="image/*" onChange={(e) => { attachFramePhoto(e.target.files?.[0]); e.target.value = ''; }} />
-              <input ref={backgroundFileRef} hidden type="file" accept="image/*" onChange={(e) => { addBackgroundPhoto(e.target.files?.[0]); e.target.value = ''; }} />
             </div>
+            <div className="frameBuilderRow">
+              <select value={newFrameShape} onChange={(e) => setNewFrameShape(e.target.value)}>
+                {FRAME_SHAPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+              <button className="secondaryBtn" onClick={() => addFrame(newFrameShape)}>+ Frame</button>
+            </div>
+            <input ref={fileRef} hidden multiple type="file" accept="image/*" onChange={(e) => { Array.from(e.target.files || []).forEach(addImage); e.target.value = ''; }} />
+            <input ref={frameFileRef} hidden type="file" accept="image/*" onChange={(e) => { attachFramePhoto(e.target.files?.[0]); e.target.value = ''; }} />
+            <input ref={backgroundFileRef} hidden type="file" accept="image/*" onChange={(e) => { addBackgroundPhoto(e.target.files?.[0]); e.target.value = ''; }} />
           </div>
         </aside>
 
         <section className="stageColumn">
           <div className="canvasOuter">
             <div className="canvasStage" style={{ aspectRatio: `${canvasWidth}/${canvasHeight}`, background: previewBackground }} onPointerDown={() => setSelectedId(null)}>
-              {backgroundPhoto && <img className="canvasBackgroundPhoto" src={backgroundPhoto} alt="Background" style={bgPhotoStyle} draggable={false} />}
+              {backgroundPhoto && <div className="canvasBackgroundPhotoWrap" style={bgPhotoStyle}><img className="canvasBackgroundPhoto" src={backgroundPhoto} alt="Background" style={bgPhotoImageStyle} draggable={false} /></div>}
               {[...layers].sort((a, b) => (a.z || 0) - (b.z || 0)).map((layer) => {
                 const common = {
                   left: `${(layer.x / canvasWidth) * 100}%`,
@@ -1291,9 +1626,9 @@ export default function TypographyStudio() {
                   );
                 }
                 if (layer.type === 'frame') {
-                  const shapeClass = `frame-${layer.frameShape || 'rect'}`;
+                  const shapeClass = `frame-${layer.customFrameKind || layer.frameShape || 'rect'}`;
                   return (
-                    <div key={layer.id} className={`canvasLayer photoFrame ${shapeClass} ${selectedId === layer.id ? 'selected' : ''} ${layerMovementLocked(layer) ? 'isLocked' : ''}`} style={{ ...common, height: `${(layer.height / canvasHeight) * 100}%`, borderRadius: layer.frameShape === 'circle' ? '50%' : layer.frameShape === 'arch' ? '50% 50% 12px 12px / 42% 42% 12px 12px' : `${layer.radius || 0}px`, background: layer.frameFill, border: `2px dashed ${layer.frameStroke || BRAND.line}` }} onPointerDown={(e) => beginDrag(e, layer)} onDoubleClick={() => chooseFramePhoto(layer.id)}>
+                    <div key={layer.id} className={`canvasLayer photoFrame ${shapeClass} ${selectedId === layer.id ? 'selected' : ''} ${layerMovementLocked(layer) ? 'isLocked' : ''}`} style={{ ...common, height: `${(layer.height / canvasHeight) * 100}%`, borderRadius: layer.frameShape === 'circle' ? '50%' : layer.frameShape === 'arch' ? '50% 50% 12px 12px / 42% 42% 12px 12px' : `${layer.radius || 0}px`, background: layer.frameFill, border: layer.imageSrc ? '0 solid transparent' : `2px dashed ${layer.frameStroke || BRAND.line}` }} onPointerDown={(e) => beginDrag(e, layer)} onDoubleClick={() => chooseFramePhoto(layer.id)}>
                       {layer.imageSrc ? (
                         <img src={layer.imageSrc} alt={layer.imageName || 'Frame photo'} draggable={false} style={{ objectFit: layer.imageFit || 'cover', objectPosition: `${layer.imagePositionX ?? 50}% ${layer.imagePositionY ?? 50}%`, transform: `scale(${layer.imageScale || 1})`, mixBlendMode: layer.blendMode || 'normal' }} />
                       ) : (
@@ -1321,7 +1656,7 @@ export default function TypographyStudio() {
                   </div>
                 );
               })}
-              {brandVisible && <div className={`brandOverlay ${brandPosition}`}><FacebookBrand dark={darkBrand} /></div>}
+              {brandVisible && <div className={`brandOverlay ${brandPosition}`}><BrandMark dark={darkBrand} styleKey={brandStyleKey} /></div>}
             </div>
           </div>
           <div className="canvasMeta"><span>{mode === 'template' ? currentTemplate.name : 'Free canvas'}</span><span>{canvasWidth} × {canvasHeight}px</span></div>
@@ -1352,8 +1687,12 @@ export default function TypographyStudio() {
                   <label>Placement<select value={backgroundPhotoPlacement} onChange={(e) => setBackgroundPhotoPlacement(e.target.value)}><option value="full">Full canvas</option><option value="top">Top half</option><option value="bottom">Bottom half</option><option value="left">Left half</option><option value="right">Right half</option></select></label>
                   <label>Blend<select value={backgroundPhotoBlend} onChange={(e) => setBackgroundPhotoBlend(e.target.value)}>{BLEND_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
                 </div>
+                <label className="rangeLabel">Crop zoom <span>{Math.round(backgroundPhotoScale * 100)}%</span><input type="range" min="100" max="300" value={backgroundPhotoScale * 100} onChange={(e) => setBackgroundPhotoScale(+e.target.value / 100)} /></label>
+                <label className="rangeLabel">Crop X <span>{Math.round(backgroundPhotoPositionX)}%</span><input type="range" min="0" max="100" value={backgroundPhotoPositionX} onChange={(e) => setBackgroundPhotoPositionX(+e.target.value)} /></label>
+                <label className="rangeLabel">Crop Y <span>{Math.round(backgroundPhotoPositionY)}%</span><input type="range" min="0" max="100" value={backgroundPhotoPositionY} onChange={(e) => setBackgroundPhotoPositionY(+e.target.value)} /></label>
                 <label className="rangeLabel">Photo opacity <span>{Math.round(backgroundPhotoOpacity * 100)}%</span><input type="range" min="0" max="100" value={backgroundPhotoOpacity * 100} onChange={(e) => setBackgroundPhotoOpacity(+e.target.value / 100)} /></label>
                 <label className="rangeLabel">Blur <span>{backgroundPhotoBlur}px</span><input type="range" min="0" max="24" value={backgroundPhotoBlur} onChange={(e) => setBackgroundPhotoBlur(+e.target.value)} /></label>
+                <button className="miniBtn" onClick={() => { setBackgroundPhotoScale(1); setBackgroundPhotoPositionX(50); setBackgroundPhotoPositionY(50); }}>Reset crop</button>
               </div>
             )}
           </div>
@@ -1366,10 +1705,14 @@ export default function TypographyStudio() {
 
                 {selected.type === 'text' && (
                   <>
-                    <textarea className="smallTextarea" value={selected.text} onChange={(e) => updateLayer(selected.id, { text: e.target.value })} />
+                    <textarea className="smallTextarea" value={selected.text} onChange={(e) => { const value = e.target.value; updateLayer(selected.id, { text: value, lineHeight: selected.autoSpacing === false ? selected.lineHeight : adaptiveLineHeight(value, selected.width, selected.fontSize, 1.12) }); }} />
                     <div className="fieldGrid">
-                      <label>Size<input disabled={selectedTransformLocked} type="number" min="16" max="240" value={Math.round(selected.fontSize)} onChange={(e) => updateLayer(selected.id, { fontSize: +e.target.value })} /></label>
+                      <label>Font size<input disabled={selectedTransformLocked} type="number" min="16" max="240" value={Math.round(selected.fontSize)} onChange={(e) => updateLayer(selected.id, { fontSize: +e.target.value })} /></label>
+                      <label>Text width<input disabled={selectedTransformLocked} type="number" min="120" max={canvasWidth} value={Math.round(selected.width)} onChange={(e) => updateLayer(selected.id, { width: clamp(+e.target.value, 120, canvasWidth) })} /></label>
+                    </div>
+                    <div className="fieldGrid">
                       <label>Weight<select value={selected.weight} onChange={(e) => updateLayer(selected.id, { weight: +e.target.value })}><option value="400">400</option><option value="500">500</option><option value="600">600</option><option value="700">700</option><option value="800">800</option><option value="900">900</option></select></label>
+                      <label>Style<select value={selected.fontStyle || 'normal'} onChange={(e) => updateLayer(selected.id, { fontStyle: e.target.value })}><option value="normal">Normal</option><option value="italic">Italic</option></select></label>
                     </div>
                     <div className="fieldGrid">
                       <label>Align<select value={selected.align} onChange={(e) => updateLayer(selected.id, { align: e.target.value })}><option>left</option><option>center</option><option>right</option></select></label>
@@ -1379,6 +1722,8 @@ export default function TypographyStudio() {
                       <label>Font<select value={selected.fontFamily || defaultFont} onChange={(e) => updateLayer(selected.id, { fontFamily: e.target.value })}>{FONT_OPTIONS.map((font) => <option key={font.label} value={font.value}>{font.label}</option>)}</select></label>
                       <label>Outline<input type="color" value={selected.strokeColor || '#645cff'} onChange={(e) => updateLayer(selected.id, { strokeColor: e.target.value, strokeWidth: selected.strokeWidth || 2 })} /></label>
                     </div>
+                    <label className="rangeLabel">Line spacing <span>{(selected.lineHeight || 1.12).toFixed(2)}</span><input disabled={selectedTransformLocked} type="range" min="0.65" max="1.7" step="0.01" value={selected.lineHeight || 1.12} onChange={(e) => updateLayer(selected.id, { lineHeight: +e.target.value, autoSpacing: false })} /></label>
+                    <button disabled={selectedTransformLocked} className="miniBtn autoSpacingBtn" onClick={() => updateLayer(selected.id, { lineHeight: adaptiveLineHeight(selected.text, selected.width, selected.fontSize, 1.12), autoSpacing: true })}>Auto spacing</button>
                     <label className="rangeLabel">Outline width <span>{Math.round(selected.strokeWidth || 0)}px</span><input type="range" min="0" max="10" value={selected.strokeWidth || 0} onChange={(e) => updateLayer(selected.id, { strokeWidth: +e.target.value })} /></label>
                   </>
                 )}
@@ -1387,6 +1732,15 @@ export default function TypographyStudio() {
                   <>
                     <div className="fieldGrid oneCol">
                       <label>Blend mode<select value={selected.blendMode || 'normal'} onChange={(e) => updateLayer(selected.id, { blendMode: e.target.value })}>{BLEND_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                    </div>
+                    <label className="checkRow"><input type="checkbox" checked={selected.aspectLocked !== false} onChange={(e) => updateLayer(selected.id, { aspectLocked: e.target.checked })} /> Lock aspect ratio while scaling</label>
+                    <div className="fieldGrid">
+                      <label>Width<input disabled={selectedTransformLocked} type="number" min="80" max={canvasWidth * 2} value={Math.round(selected.width)} onChange={(e) => {
+                        const nextWidth = Math.max(80, +e.target.value);
+                        const ratio = selected.width / Math.max(1, selected.height);
+                        updateLayer(selected.id, selected.aspectLocked !== false ? { width: nextWidth, height: nextWidth / ratio } : { width: nextWidth });
+                      }} /></label>
+                      <label>Height<input disabled={selectedTransformLocked || selected.aspectLocked !== false} type="number" min="80" max={canvasHeight * 2} value={Math.round(selected.height)} onChange={(e) => updateLayer(selected.id, { height: Math.max(80, +e.target.value) })} /></label>
                     </div>
                   </>
                 )}
@@ -1398,8 +1752,33 @@ export default function TypographyStudio() {
                       {selected.imageSrc && <button className="miniBtn danger" onClick={() => updateLayer(selected.id, { imageSrc: null, imageName: '' })}>Clear</button>}
                     </div>
                     <div className="fieldGrid">
+                      <label>Frame shape<select disabled={selectedTransformLocked} value={selected.customFrameKind || selected.frameShape || 'rect'} onChange={(e) => {
+                        const kind = e.target.value;
+                        const shape = kind === 'rounded' || kind === 'film' ? 'rect' : kind;
+                        const patch = { customFrameKind: kind, frameShape: shape };
+                        patch.aspectLocked = true;
+                        if (kind === 'circle') { patch.radius = 999; patch.height = selected.width; }
+                        if (kind === 'rounded') patch.radius = 34;
+                        if (kind === 'rect') patch.radius = 0;
+                        if (kind === 'film') { patch.radius = 3; patch.height = selected.width * 0.33; }
+                        if (kind === 'polaroid') { patch.radius = 8; patch.height = selected.width * 1.12; }
+                        if (kind === 'arch') { patch.radius = 180; patch.height = selected.width * 1.12; }
+                        updateLayer(selected.id, patch);
+                      }}>{FRAME_SHAPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
                       <label>Fit<select value={selected.imageFit || 'cover'} onChange={(e) => updateLayer(selected.id, { imageFit: e.target.value })}><option value="cover">Cover</option><option value="contain">Contain</option></select></label>
+                    </div>
+                    <div className="fieldGrid">
                       <label>Blend<select value={selected.blendMode || 'normal'} onChange={(e) => updateLayer(selected.id, { blendMode: e.target.value })}>{BLEND_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                      <label>Corner radius<input disabled={selectedTransformLocked || ['circle','arch'].includes(selected.frameShape)} type="number" min="0" max="300" value={Math.round(selected.radius || 0)} onChange={(e) => updateLayer(selected.id, { radius: +e.target.value })} /></label>
+                    </div>
+                    <label className="checkRow"><input type="checkbox" checked={selected.aspectLocked !== false} onChange={(e) => updateLayer(selected.id, { aspectLocked: e.target.checked })} /> Lock frame ratio while scaling</label>
+                    <div className="fieldGrid">
+                      <label>Frame width<input disabled={selectedTransformLocked} type="number" min="80" max={canvasWidth * 2} value={Math.round(selected.width)} onChange={(e) => {
+                        const nextWidth = Math.max(80, +e.target.value);
+                        const ratio = selected.width / Math.max(1, selected.height);
+                        updateLayer(selected.id, selected.aspectLocked !== false ? { width: nextWidth, height: nextWidth / ratio } : { width: nextWidth });
+                      }} /></label>
+                      <label>Frame height<input disabled={selectedTransformLocked || selected.aspectLocked !== false} type="number" min="80" max={canvasHeight * 2} value={Math.round(selected.height)} onChange={(e) => updateLayer(selected.id, { height: Math.max(80, +e.target.value) })} /></label>
                     </div>
                     <label className="rangeLabel">Photo zoom <span>{Math.round((selected.imageScale || 1) * 100)}%</span><input type="range" min="50" max="240" value={(selected.imageScale || 1) * 100} onChange={(e) => updateLayer(selected.id, { imageScale: +e.target.value / 100 })} /></label>
                     <label className="rangeLabel">Photo X <span>{Math.round(selected.imagePositionX ?? 50)}%</span><input type="range" min="0" max="100" value={selected.imagePositionX ?? 50} onChange={(e) => updateLayer(selected.id, { imagePositionX: +e.target.value })} /></label>
@@ -1426,9 +1805,12 @@ export default function TypographyStudio() {
           ) : <div className="emptyInspector">Select text, a picture, frame, or block on the canvas to edit it.</div>}
 
           <div className="panelSection">
-            <div className="sectionTitle">Branding</div>
+            <div className="sectionTitle">Branding <span>{BRAND_STYLES[brandStyleKey]?.label || 'Custom'}</span></div>
+            <div className="fieldGrid oneCol">
+              <label>Footer style<select value={brandStyleKey} onChange={(e) => setBrandStyleKey(e.target.value)}>{BRAND_STYLE_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+            </div>
             <select className="fullSelect" value={brandPosition} onChange={(e) => setBrandPosition(e.target.value)}><option value="bottom-left">Bottom left</option><option value="bottom-center">Bottom center</option><option value="bottom-right">Bottom right</option></select>
-            <label className="checkRow"><input type="checkbox" checked={brandVisible} onChange={(e) => setBrandVisible(e.target.checked)} /> Facebook icon + kiocreates</label>
+            <label className="checkRow"><input type="checkbox" checked={brandVisible} onChange={(e) => setBrandVisible(e.target.checked)} /> Show kiocreates footer</label>
           </div>
 
           <div className="panelSection">
@@ -1438,6 +1820,12 @@ export default function TypographyStudio() {
           </div>
         </aside>
       </section>
+      <nav className="mobileQuickBar" aria-label="Mobile editor shortcuts">
+        <button onClick={() => document.querySelector('.stageColumn')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>▣</span><small>Canvas</small></button>
+        <button onClick={() => document.querySelector('.leftPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>▦</span><small>Templates</small></button>
+        <button onClick={() => document.querySelector('.inspectorPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>✦</span><small>Edit</small></button>
+        <button onClick={() => exportImage('jpg')} disabled={exporting}><span>↓</span><small>JPG</small></button>
+      </nav>
     </main>
   );
 }
