@@ -842,7 +842,6 @@ function buildTemplateLayers(template, width, height, quoteText) {
   return [...base, quote];
 }
 
-\
 const DYNAMIC_RECREATE_RECIPES = [
   { id:'dynamic-soft-editorial', name:'Soft Editorial', category:'Dynamic Recreate', background:'#ffffff', accent:'#645cff', footerStyle:'serif', layout:'centered' },
   { id:'dynamic-memory-window', name:'Memory Window', category:'Dynamic Recreate', background:'#f5f2ed', accent:'#645cff', footerStyle:'signature', layout:'center-photo' },
@@ -1206,7 +1205,10 @@ export default function TypographyStudio() {
   const [quality, setQuality] = useState(92);
   const [exporting, setExporting] = useState(false);
   const [templateLocked, setTemplateLocked] = useState(true);
+  const [workspacePage, setWorkspacePage] = useState('freeform');
+  const [cropLayerId, setCropLayerId] = useState(null);
   const dragRef = useRef(null);
+  const cropDragRef = useRef(null);
   const fileRef = useRef(null);
   const frameFileRef = useRef(null);
   const backgroundFileRef = useRef(null);
@@ -1221,7 +1223,6 @@ export default function TypographyStudio() {
   const [remixSuggestions, setRemixSuggestions] = useState([]);
   const [remixSeed, setRemixSeed] = useState(0);
   const [remixMode, setRemixMode] = useState('dynamic');
-  const [remixImageUsage, setRemixImageUsage] = useState('reference');
 
   const [canvasWidth, canvasHeight] = CANVAS_PRESETS[sizeKey];
   const selected = layers.find((l) => l.id === selectedId) || null;
@@ -1510,100 +1511,46 @@ export default function TypographyStudio() {
 
   const applyRemixSuggestion = (suggestion) => {
     const textValue = suggestion?.text?.trim() || remixDetectedText.trim() || quoteText.trim() || starterQuote;
-    const shouldUseFrame = remixImageSrc && remixImageUsage === 'frame';
-    const shouldUseBackground = remixImageSrc && remixImageUsage === 'background';
+
+    // The uploaded screenshot is always a reference. It is never inserted into the editor canvas.
+    setBackgroundPhoto('');
+    setCropLayerId(null);
 
     if (suggestion.kind === 'dynamic') {
       const next = makeDynamicRecreateState(suggestion.recipeId, sizeKey, textValue);
-      let nextLayers = next.layers;
-      if (shouldUseFrame) {
-        let filled = false;
-        nextLayers = nextLayers.map((layer) => {
-          if (!filled && layer.type === 'frame') {
-            filled = true;
-            return { ...layer, imageSrc: remixImageSrc, imageName: remixFileName || 'reference', imageScale: 1, imagePositionX: 50, imagePositionY: 50, opacity: 1, blendMode: 'normal' };
-          }
-          return layer;
-        });
-        if (!filled) {
-          nextLayers = [...nextLayers, { id: nextId(), type: 'image', src: remixImageSrc, name: remixFileName || 'reference', x: canvasWidth * 0.18, y: canvasHeight * 0.18, width: canvasWidth * 0.64, height: canvasHeight * 0.42, rotation: 0, opacity: 1, z: Math.max(4, ...nextLayers.map((layer) => layer.z || 1)) + 1, aspectLocked: true }];
-        }
-      }
+      const editableLayers = next.layers.map((layer) => ({ ...layer, templateOwned: false, locked: false }));
       setMode('free');
       setTemplateId('');
       setQuoteText(textValue);
       setBackground(next.background);
       setGradient(next.gradient);
-      setLayers(nextLayers.map((layer) => ({ ...layer, templateOwned: false })));
-      setSelectedId(nextLayers.find((layer) => layer.role === 'quote')?.id || nextLayers[0]?.id || null);
+      setLayers(editableLayers);
+      setSelectedId(editableLayers.find((layer) => layer.role === 'quote')?.id || editableLayers[0]?.id || null);
       setBrandStyleKey(suggestion.footerStyle || 'social');
       setTemplateLocked(false);
-      if (shouldUseBackground) {
-        setBackgroundPhoto(remixImageSrc);
-        setBackgroundPhotoOpacity(0.34);
-        setBackgroundPhotoBlend('multiply');
-        setBackgroundPhotoBlur(0);
-        setBackgroundPhotoPlacement('full');
-        setBackgroundPhotoScale(1.08);
-        setBackgroundPhotoPositionX(50);
-        setBackgroundPhotoPositionY(50);
-      } else {
-        setBackgroundPhoto('');
-      }
-      document.querySelector('.stageColumn')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setWorkspacePage('freeform');
       return;
     }
 
     const next = makeTemplateState(suggestion.templateId, sizeKey, textValue);
-    let nextLayers = next.layers;
-    if (shouldUseFrame) {
-      let frameAttached = false;
-      nextLayers = nextLayers.map((layer) => {
-        if (!frameAttached && layer.type === 'frame') {
-          frameAttached = true;
-          return { ...layer, imageSrc: remixImageSrc, imageName: remixFileName || 'reference', imageScale: 1, imagePositionX: 50, imagePositionY: 50, opacity: 1, blendMode: 'normal' };
-        }
-        return layer;
-      });
-      if (!frameAttached) {
-        nextLayers = [...nextLayers, { id: nextId(), type: 'image', src: remixImageSrc, name: remixFileName || 'reference', x: canvasWidth * 0.18, y: canvasHeight * 0.18, width: canvasWidth * 0.64, height: canvasHeight * 0.42, rotation: 0, opacity: 1, z: Math.max(4, ...nextLayers.map((layer) => layer.z || 1)) + 1, aspectLocked: true }];
-      }
-    }
-
     setTemplateId(suggestion.templateId);
     setMode('template');
     setQuoteText(textValue);
     setBackground(next.background);
     setGradient(next.gradient);
-    setLayers(nextLayers);
-    setSelectedId(nextLayers.find((layer) => layer.role === 'quote')?.id || nextLayers[0]?.id || null);
+    setLayers(next.layers);
+    setSelectedId(next.layers.find((layer) => layer.role === 'quote')?.id || next.layers[0]?.id || null);
     setBrandStyleKey(footerStyleForTemplate(templates.find((item) => item.id === suggestion.templateId)));
     setTemplateLocked(true);
-    if (shouldUseBackground) {
-      setBackgroundPhoto(remixImageSrc);
-      setBackgroundPhotoOpacity(0.28);
-      setBackgroundPhotoBlend('multiply');
-      setBackgroundPhotoBlur(0);
-      setBackgroundPhotoPlacement('full');
-      setBackgroundPhotoScale(1.1);
-      setBackgroundPhotoPositionX(50);
-      setBackgroundPhotoPositionY(50);
-    } else {
-      setBackgroundPhoto('');
-    }
-    document.querySelector('.stageColumn')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setWorkspacePage('freeform');
   };
 
   const layerMovementLocked = (layer) => Boolean(layer?.locked || (mode === 'template' && templateLocked && layer?.templateOwned));
-  const canDeleteLayer = (layer) => Boolean(layer && (!layerMovementLocked(layer) || (layer.type === 'frame' && layer.imageSrc)));
+  const canDeleteLayer = (layer) => Boolean(layer && !layerMovementLocked(layer));
 
   const removeSelected = () => {
-    if (!selected) return;
-    if (selected.type === 'frame' && selected.imageSrc) {
-      updateLayer(selected.id, { imageSrc: null, imageName: '', imageScale: 1, imagePositionX: 50, imagePositionY: 50, blendMode: 'normal' });
-      return;
-    }
-    if (!canDeleteLayer(selected)) return;
+    if (!selected || !canDeleteLayer(selected)) return;
+    if (cropLayerId === selected.id) setCropLayerId(null);
     setLayers((prev) => {
       const next = prev.filter((layer) => layer.id !== selected.id);
       setTimeout(() => setSelectedId(next[next.length - 1]?.id || null), 0);
@@ -1629,8 +1576,60 @@ export default function TypographyStudio() {
     updateLayer(other.id, { z });
   };
 
+  const enterCropMode = (layer) => {
+    if (!layer || layer.type !== 'frame') return;
+    setSelectedId(layer.id);
+    if (!layer.imageSrc) {
+      chooseFramePhoto(layer.id);
+      return;
+    }
+    setCropLayerId(layer.id);
+  };
+
+  const exitCropMode = () => {
+    setCropLayerId(null);
+    cropDragRef.current = null;
+    window.removeEventListener('pointermove', onCropPointerMove);
+  };
+
+  const beginCropDrag = (e, layer) => {
+    if (!layer?.imageSrc || cropLayerId !== layer.id) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    cropDragRef.current = {
+      id: layer.id,
+      startX: e.clientX,
+      startY: e.clientY,
+      positionX: layer.imagePositionX ?? 50,
+      positionY: layer.imagePositionY ?? 50,
+      width: Math.max(1, rect.width),
+      height: Math.max(1, rect.height)
+    };
+    window.addEventListener('pointermove', onCropPointerMove);
+    window.addEventListener('pointerup', endCropDrag, { once: true });
+  };
+
+  const onCropPointerMove = (e) => {
+    const d = cropDragRef.current;
+    if (!d) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    updateLayer(d.id, {
+      imagePositionX: clamp(d.positionX - (dx / d.width) * 100, 0, 100),
+      imagePositionY: clamp(d.positionY - (dy / d.height) * 100, 0, 100)
+    });
+  };
+
+  const endCropDrag = () => {
+    cropDragRef.current = null;
+    window.removeEventListener('pointermove', onCropPointerMove);
+  };
+
   const beginDrag = (e, layer, kind = 'move') => {
     if (layer.type === 'shape') return;
+    if (cropLayerId === layer.id && layer.type === 'frame') return;
+    if (cropLayerId && cropLayerId !== layer.id) setCropLayerId(null);
     e.preventDefault();
     e.stopPropagation();
     setSelectedId(layer.id);
@@ -1930,24 +1929,119 @@ export default function TypographyStudio() {
   return (
     <main className="studioShell">
       <header className="studioHeader">
-        <div>
+        <div className="brandCluster">
           <div className="studioBrand">kiocreates</div>
           <div className="studioSubtitle">Typography Studio</div>
         </div>
+        <nav className="studioNav" aria-label="TyponiKio sections">
+          <button className={workspacePage === 'recreate' ? 'active' : ''} onClick={() => setWorkspacePage('recreate')}>Recreate</button>
+          <button className={workspacePage === 'templates' ? 'active' : ''} onClick={() => setWorkspacePage('templates')}>Templates</button>
+          <button className={workspacePage === 'freeform' ? 'active' : ''} onClick={() => setWorkspacePage('freeform')}>Freeform</button>
+        </nav>
         <div className="headerActions">
-          <button className="ghostBtn" onClick={() => setBrandVisible((v) => !v)}>{brandVisible ? 'Brand on' : 'Brand off'}</button>
-          <button className="primaryBtn" onClick={() => exportImage('jpg')} disabled={exporting}>Download JPG</button>
-          <button className="primaryBtn" onClick={() => exportImage('webp')} disabled={exporting}>Download WebP</button>
+          {workspacePage === 'freeform' && <button className="ghostBtn" onClick={() => setBrandVisible((v) => !v)}>{brandVisible ? 'Brand on' : 'Brand off'}</button>}
+          {workspacePage === 'freeform' && <button className="primaryBtn" onClick={() => exportImage('jpg')} disabled={exporting}>Download JPG</button>}
+          {workspacePage === 'freeform' && <button className="primaryBtn" onClick={() => exportImage('webp')} disabled={exporting}>Download WebP</button>}
         </div>
       </header>
 
-      <section className="workspace">
+
+
+      {workspacePage === 'recreate' && (
+        <section className="pageShell recreatePage">
+          <div className="pageIntro">
+            <span className="eyebrow">Recreate</span>
+            <h1>Upload the reference. Edit the text. Generate a new design.</h1>
+            <p>The uploaded post stays here as a reference only. It will not be placed on your editing canvas.</p>
+          </div>
+          <div className="recreateGrid">
+            <div className="pageCard recreateInputCard">
+              <div className="stepLabel">01 · Upload reference</div>
+              <div className="uploadDrop" onClick={() => remixFileRef.current?.click()}>
+                {remixImageSrc ? <img src={remixImageSrc} alt="Reference post" /> : <div><strong>Upload a post or screenshot</strong><span>JPG, PNG, WebP</span></div>}
+              </div>
+              <input ref={remixFileRef} hidden type="file" accept="image/*" onChange={(e) => { uploadRemixReference(e.target.files?.[0]); e.target.value = ''; }} />
+              <div className="buttonRow">
+                <button className="secondaryBtn" onClick={() => remixFileRef.current?.click()}>{remixImageSrc ? 'Replace reference' : 'Choose image'}</button>
+                {remixImageSrc && <button className="miniBtn danger" onClick={clearRemixReference}>Remove</button>}
+              </div>
+              {remixStatus && <div className="statusNote">{remixStatus}</div>}
+
+              <div className="stepLabel stepGap">02 · Review text</div>
+              <textarea className="quoteInput recreateTextArea" placeholder="Detected or pasted text will appear here…" value={remixDetectedText} onChange={(e) => setRemixDetectedText(e.target.value)} />
+              <div className="fieldGrid oneCol recreateModeField">
+                <label>Recreate style<select value={remixMode} onChange={(e) => { setRemixMode(e.target.value); setRemixSuggestions([]); }}><option value="dynamic">Dynamic recreate</option><option value="template">Template remix</option></select></label>
+              </div>
+              <button className="primaryBtn wideAction" disabled={remixBusy || (!remixDetectedText.trim() && !quoteText.trim())} onClick={() => buildRemixSuggestions(Math.random())}>{remixBusy ? 'Reading reference…' : 'Generate 5 designs'}</button>
+            </div>
+
+            <div className="pageCard recreateResultsCard">
+              <div className="resultsHeader">
+                <div><div className="stepLabel">03 · Choose a design</div><h3>{remixSuggestions.length ? 'Your five suggestions' : 'Suggestions will appear here'}</h3></div>
+                {remixSuggestions.length > 0 && <button className="ghostBtn" disabled={remixBusy} onClick={() => buildRemixSuggestions(Math.random() + remixSeed)}>Generate 5 more</button>}
+              </div>
+              {remixSuggestions.length === 0 ? (
+                <div className="emptyResults"><strong>No generated designs yet.</strong><span>Upload a reference, review the text, then generate.</span></div>
+              ) : (
+                <div className="recreateSuggestionGrid">
+                  {remixSuggestions.map((suggestion) => {
+                    const template = suggestion.kind === 'template' ? templates.find((item) => item.id === suggestion.templateId) : null;
+                    return (
+                      <article key={suggestion.id} className="recreateSuggestionCard">
+                        <div className="recreateSuggestionPreview">
+                          {suggestion.kind === 'dynamic' ? <DynamicMiniPreview recipeId={suggestion.recipeId} text={suggestion.text} /> : template ? <TemplateMiniPreview template={template} /> : null}
+                        </div>
+                        <div className="suggestionFooter">
+                          <div><strong>{suggestion.name}</strong><span>{suggestion.kind === 'dynamic' ? 'New dynamic layout' : suggestion.category}</span></div>
+                          <button className="primaryBtn" onClick={() => applyRemixSuggestion(suggestion)}>Edit design</button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {workspacePage === 'templates' && (
+        <section className="pageShell templatesPage">
+          <div className="pageIntro templatesIntro">
+            <div><span className="eyebrow">Templates</span><h1>Pick a layout, then edit it beside the canvas.</h1></div>
+            <button className="primaryBtn" onClick={() => { startFree(); setWorkspacePage('freeform'); }}>Start blank canvas</button>
+          </div>
+          <div className="templateLibraryCard">
+            <div className="categoryChips templatePageChips">
+              {TEMPLATE_CATEGORIES.map((cat) => (
+                <button key={cat} className={`chip ${templateFilter === cat ? 'active' : ''}`} onClick={() => setTemplateFilter(cat)}>{cat}</button>
+              ))}
+            </div>
+            {groupedTemplates.map((group) => (
+              <section key={group.category} className="templateLibraryGroup">
+                <div className="templateLibraryHeading"><h2>{group.category}</h2><span>{group.items.length} designs</span></div>
+                <div className="templateLibraryGrid">
+                  {group.items.map((t) => (
+                    <button key={t.id} className="templateLibraryTile" onClick={() => { applyTemplate(t.id); setWorkspacePage('freeform'); }}>
+                      <TemplateMiniPreview template={t} />
+                      <span>{t.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {workspacePage === 'freeform' && (
+      <section className="workspace editorWorkspace">
         <aside className="panel leftPanel">
-          <div className="panelSection">
-            <div className="sectionTitle">Mode</div>
-            <div className="segmented">
-              <button className={mode === 'template' ? 'active' : ''} onClick={() => applyTemplate(templateId || 'clean-center')}>Templates</button>
-              <button className={mode === 'free' ? 'active' : ''} onClick={() => startFree()}>Free mode</button>
+          <div className="panelSection editorStartSection">
+            <div className="sectionTitle">Editor <span>{mode === 'template' ? 'template' : 'freeform'}</span></div>
+            <div className="buttonRow">
+              <button className="secondaryBtn" onClick={() => setWorkspacePage('templates')}>Browse templates</button>
+              <button className="ghostBtn" onClick={() => startFree()}>Start blank</button>
             </div>
             {mode === 'template' && (
               <button className={`templateLockBtn ${templateLocked ? 'locked' : 'unlocked'}`} onClick={() => setTemplateLocked((value) => !value)}>
@@ -1970,88 +2064,10 @@ export default function TypographyStudio() {
           </div>
 
           <div className="panelSection">
-            <div className="sectionTitle">Recreate from post</div>
-            <div className="buttonRow addRow remixActions">
-              <button className="secondaryBtn" onClick={() => remixFileRef.current?.click()}>{remixImageSrc ? 'Replace reference' : 'Upload post'}</button>
-              {remixImageSrc && <button className="miniBtn danger" onClick={clearRemixReference}>Clear</button>}
-            </div>
-            <input ref={remixFileRef} hidden type="file" accept="image/*" onChange={(e) => { uploadRemixReference(e.target.files?.[0]); e.target.value = ''; }} />
-            {remixImageSrc && (
-              <div className="remixPreviewWrap">
-                <img className="remixPreviewImage" src={remixImageSrc} alt="Reference post" />
-                <div className="remixMeta">
-                  <strong>{remixFileName || 'Reference post'}</strong>
-                  <span>{remixBusy ? 'Scanning text…' : 'Reference ready'}</span>
-                </div>
-              </div>
-            )}
-            <p className="remixHint">Upload a post screenshot and TyponiKio will suggest five redesigned versions. You can review the detected text before generating.</p>
-            <div className="fieldGrid">
-              <label>Suggestion mode<select value={remixMode} onChange={(e) => setRemixMode(e.target.value)}><option value="dynamic">Dynamic recreate</option><option value="template">Template remix</option></select></label>
-              <label>Image usage<select value={remixImageUsage} onChange={(e) => setRemixImageUsage(e.target.value)}><option value="reference">Reference only</option><option value="frame">Use as photo</option><option value="background">Use as background</option></select></label>
-            </div>
-            {remixStatus && <div className="statusNote">{remixStatus}</div>}
-            <textarea className="quoteInput remixTextarea" placeholder="Detected or pasted text will appear here…" value={remixDetectedText} onChange={(e) => setRemixDetectedText(e.target.value)} />
-            <div className="buttonRow remixGenerateRow">
-              <button className="primaryBtn" disabled={remixBusy || (!remixDetectedText.trim() && !quoteText.trim())} onClick={() => buildRemixSuggestions(Math.random())}>Generate 5 designs</button>
-              {remixSuggestions.length > 0 && <button className="ghostBtn" disabled={remixBusy} onClick={() => buildRemixSuggestions(Math.random() + remixSeed)}>5 more</button>}
-            </div>
-            {remixSuggestions.length > 0 && (
-              <div className="remixSuggestionList">
-                {remixSuggestions.map((suggestion) => {
-                  const template = suggestion.kind === 'template' ? templates.find((item) => item.id === suggestion.templateId) : null;
-                  return (
-                    <div key={suggestion.id} className="remixSuggestionCard">
-                      <div className="remixSuggestionHead">
-                        <div>
-                          <strong>{suggestion.name}</strong>
-                          <span>{suggestion.kind === 'dynamic' ? 'Dynamic recreate' : suggestion.category}</span>
-                        </div>
-                        <button className="miniBtn" onClick={() => applyRemixSuggestion(suggestion)}>Use</button>
-                      </div>
-                      <div className="remixSuggestionPreview">
-                        {suggestion.kind === 'dynamic' ? <DynamicMiniPreview recipeId={suggestion.recipeId} text={suggestion.text} /> : template ? <TemplateMiniPreview template={template} /> : null}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {mode === 'template' && (
-            <div className="panelSection growSection">
-              <div className="sectionTitle">Templates <span>{templates.length}</span></div>
-              <div className="categoryChips">
-                {TEMPLATE_CATEGORIES.map((cat) => (
-                  <button key={cat} className={`chip ${templateFilter === cat ? 'active' : ''}`} onClick={() => setTemplateFilter(cat)}>{cat}</button>
-                ))}
-              </div>
-              {templateFilter !== 'All' && <div className="sectionHint">Showing <strong>{filteredTemplates.length}</strong> template{filteredTemplates.length !== 1 ? 's' : ''} in <strong>{templateFilter}</strong></div>}
-              {groupedTemplates.map((group) => (
-                <div key={group.category} className="templateSectionGroup">
-                  <div className="templateSectionHeading">
-                    <h4>{group.category}</h4>
-                    <span>{group.items.length}</span>
-                  </div>
-                  <div className="templateGrid">
-                    {group.items.map((t) => (
-                      <button key={t.id} className={`templateTile ${templateId === t.id ? 'active' : ''}`} onClick={() => applyTemplate(t.id)}>
-                        <TemplateMiniPreview template={t} />
-                        <span>{t.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="panelSection">
             <div className="sectionTitle">Add</div>
             <div className="buttonRow addRow">
               <button className="secondaryBtn" onClick={addText}>+ Text</button>
-              <button className="secondaryBtn" onClick={() => fileRef.current?.click()}>+ Pictures</button>
+              <button className="secondaryBtn" onClick={() => fileRef.current?.click()}>+ Picture</button>
               <button className="secondaryBtn" onClick={addBlock}>+ Block</button>
             </div>
             <div className="frameBuilderRow">
@@ -2068,7 +2084,7 @@ export default function TypographyStudio() {
 
         <section className="stageColumn">
           <div className="canvasOuter">
-            <div className="canvasStage" style={{ aspectRatio: `${canvasWidth}/${canvasHeight}`, background: previewBackground }} onPointerDown={() => setSelectedId(null)}>
+            <div className="canvasStage" style={{ aspectRatio: `${canvasWidth}/${canvasHeight}`, background: previewBackground }} onPointerDown={() => { setSelectedId(null); setCropLayerId(null); }}>
               {backgroundPhoto && <div className="canvasBackgroundPhotoWrap" style={bgPhotoStyle}><img className="canvasBackgroundPhoto" src={backgroundPhoto} alt="Background" style={bgPhotoImageStyle} draggable={false} /></div>}
               {[...layers].sort((a, b) => (a.z || 0) - (b.z || 0)).map((layer) => {
                 const common = {
@@ -2093,13 +2109,15 @@ export default function TypographyStudio() {
                 if (layer.type === 'frame') {
                   const shapeClass = `frame-${layer.customFrameKind || layer.frameShape || 'rect'}`;
                   return (
-                    <div key={layer.id} className={`canvasLayer photoFrame ${shapeClass} ${selectedId === layer.id ? 'selected' : ''} ${layerMovementLocked(layer) ? 'isLocked' : ''}`} style={{ ...common, height: `${(layer.height / canvasHeight) * 100}%`, borderRadius: layer.frameShape === 'circle' ? '50%' : layer.frameShape === 'arch' ? '50% 50% 12px 12px / 42% 42% 12px 12px' : `${layer.radius || 0}px`, background: layer.frameFill, border: layer.imageSrc ? '0 solid transparent' : `2px dashed ${layer.frameStroke || BRAND.line}` }} onPointerDown={(e) => beginDrag(e, layer)} onDoubleClick={() => chooseFramePhoto(layer.id)}>
+                    <div key={layer.id} className={`canvasLayer photoFrame ${shapeClass} ${selectedId === layer.id ? 'selected' : ''} ${layerMovementLocked(layer) ? 'isLocked' : ''} ${cropLayerId === layer.id ? 'isCropping' : ''}`} style={{ ...common, height: `${(layer.height / canvasHeight) * 100}%`, borderRadius: layer.frameShape === 'circle' ? '50%' : layer.frameShape === 'arch' ? '50% 50% 12px 12px / 42% 42% 12px 12px' : `${layer.radius || 0}px`, background: layer.frameFill, border: layer.imageSrc ? '0 solid transparent' : `2px dashed ${layer.frameStroke || BRAND.line}` }} onPointerDown={(e) => cropLayerId === layer.id ? beginCropDrag(e, layer) : beginDrag(e, layer)} onDoubleClick={(e) => { e.stopPropagation(); enterCropMode(layer); }}>
                       {layer.imageSrc ? (
                         <img src={layer.imageSrc} alt={layer.imageName || 'Frame photo'} draggable={false} style={{ objectFit: layer.imageFit || 'cover', objectPosition: `${layer.imagePositionX ?? 50}% ${layer.imagePositionY ?? 50}%`, transform: `scale(${layer.imageScale || 1})`, mixBlendMode: layer.blendMode || 'normal' }} />
                       ) : (
                         <button className="framePlaceholder" onPointerDown={(e) => e.stopPropagation()} onClick={() => chooseFramePhoto(layer.id)}>+ Add photo</button>
                       )}
-                      {layerMovementLocked(layer) && <span className="layerLockBadge">🔒</span>}
+                      {cropLayerId === layer.id && <span className="cropFrameBadge">Drag photo to crop</span>}
+                      {layerMovementLocked(layer) && cropLayerId !== layer.id && <span className="layerLockBadge">🔒</span>}
+                      {selectedId === layer.id && layer.imageSrc && cropLayerId !== layer.id && <button className="quickPhotoDelete" title="Delete photo" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { imageSrc: null, imageName: '', imageScale: 1, imagePositionX: 50, imagePositionY: 50 }); }}>×</button>}
                       <span className="resizeHandle" onPointerDown={(e) => beginDrag(e, layer, 'resize')} />
                     </div>
                   );
@@ -2109,6 +2127,7 @@ export default function TypographyStudio() {
                     <div key={layer.id} className={`canvasLayer imageLayer ${selectedId === layer.id ? 'selected' : ''} ${layerMovementLocked(layer) ? 'isLocked' : ''}`} style={{ ...common, height: `${(layer.height / canvasHeight) * 100}%`, mixBlendMode: layer.blendMode || 'normal' }} onPointerDown={(e) => beginDrag(e, layer)}>
                       <img src={layer.src} alt="Uploaded" draggable={false} />
                       {layerMovementLocked(layer) && <span className="layerLockBadge">🔒</span>}
+                      {selectedId === layer.id && !layerMovementLocked(layer) && <button className="quickPhotoDelete" title="Delete photo" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); setLayers((prev) => prev.filter((item) => item.id !== layer.id)); setSelectedId(null); }}>×</button>}
                       <span className="resizeHandle" onPointerDown={(e) => beginDrag(e, layer, 'resize')} />
                     </div>
                   );
@@ -2121,6 +2140,13 @@ export default function TypographyStudio() {
                   </div>
                 );
               })}
+              {cropLayerId && (
+                <div className="cropModeToolbar" onPointerDown={(e) => e.stopPropagation()}>
+                  <span>Crop mode · drag the photo inside the frame</span>
+                  <button onClick={() => { const layer = layers.find((item) => item.id === cropLayerId); if (layer) updateLayer(layer.id, { imagePositionX: 50, imagePositionY: 50, imageScale: 1 }); }}>Reset</button>
+                  <button className="cropDoneBtn" onClick={exitCropMode}>Done</button>
+                </div>
+              )}
               {brandVisible && <div className={`brandOverlay ${brandPosition}`}><BrandMark dark={darkBrand} styleKey={brandStyleKey} /></div>}
             </div>
           </div>
@@ -2134,33 +2160,6 @@ export default function TypographyStudio() {
               <textarea className="quoteInput" value={quoteText} onChange={(e) => handleTemplateQuoteChange(e.target.value)} />
             </div>
           )}
-
-          <div className="panelSection">
-            <div className="sectionTitle">Background</div>
-            <div className="colorControl">
-              <input type="color" value={background} onChange={(e) => { setBackground(e.target.value); setGradient(false); }} />
-              <input value={background} onChange={(e) => { setBackground(e.target.value); setGradient(false); }} />
-            </div>
-            <label className="checkRow"><input type="checkbox" checked={gradient} onChange={(e) => setGradient(e.target.checked)} /> Kiocreates soft gradient</label>
-            <div className="buttonRow backgroundActions">
-              <button className="secondaryBtn" onClick={() => backgroundFileRef.current?.click()}>{backgroundPhoto ? 'Replace photo' : '+ Photo background'}</button>
-              {backgroundPhoto && <button className="miniBtn danger" onClick={() => setBackgroundPhoto('')}>Remove</button>}
-            </div>
-            {backgroundPhoto && (
-              <div className="backgroundPhotoControls">
-                <div className="fieldGrid">
-                  <label>Placement<select value={backgroundPhotoPlacement} onChange={(e) => setBackgroundPhotoPlacement(e.target.value)}><option value="full">Full canvas</option><option value="top">Top half</option><option value="bottom">Bottom half</option><option value="left">Left half</option><option value="right">Right half</option></select></label>
-                  <label>Blend<select value={backgroundPhotoBlend} onChange={(e) => setBackgroundPhotoBlend(e.target.value)}>{BLEND_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-                </div>
-                <label className="rangeLabel">Crop zoom <span>{Math.round(backgroundPhotoScale * 100)}%</span><input type="range" min="100" max="300" value={backgroundPhotoScale * 100} onChange={(e) => setBackgroundPhotoScale(+e.target.value / 100)} /></label>
-                <label className="rangeLabel">Crop X <span>{Math.round(backgroundPhotoPositionX)}%</span><input type="range" min="0" max="100" value={backgroundPhotoPositionX} onChange={(e) => setBackgroundPhotoPositionX(+e.target.value)} /></label>
-                <label className="rangeLabel">Crop Y <span>{Math.round(backgroundPhotoPositionY)}%</span><input type="range" min="0" max="100" value={backgroundPhotoPositionY} onChange={(e) => setBackgroundPhotoPositionY(+e.target.value)} /></label>
-                <label className="rangeLabel">Photo opacity <span>{Math.round(backgroundPhotoOpacity * 100)}%</span><input type="range" min="0" max="100" value={backgroundPhotoOpacity * 100} onChange={(e) => setBackgroundPhotoOpacity(+e.target.value / 100)} /></label>
-                <label className="rangeLabel">Blur <span>{backgroundPhotoBlur}px</span><input type="range" min="0" max="24" value={backgroundPhotoBlur} onChange={(e) => setBackgroundPhotoBlur(+e.target.value)} /></label>
-                <button className="miniBtn" onClick={() => { setBackgroundPhotoScale(1); setBackgroundPhotoPositionX(50); setBackgroundPhotoPositionY(50); }}>Reset crop</button>
-              </div>
-            )}
-          </div>
 
           {selected ? (
             <>
@@ -2195,6 +2194,9 @@ export default function TypographyStudio() {
 
                 {selected.type === 'image' && (
                   <>
+                    <div className="buttonRow photoDeleteRow">
+                      <button className="miniBtn danger" disabled={selectedTransformLocked} onClick={() => { setLayers((prev) => prev.filter((item) => item.id !== selected.id)); setSelectedId(null); }}>Delete photo</button>
+                    </div>
                     <div className="fieldGrid oneCol">
                       <label>Blend mode<select value={selected.blendMode || 'normal'} onChange={(e) => updateLayer(selected.id, { blendMode: e.target.value })}>{BLEND_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
                     </div>
@@ -2212,10 +2214,12 @@ export default function TypographyStudio() {
 
                 {selected.type === 'frame' && (
                   <>
-                    <div className="buttonRow">
+                    <div className="buttonRow framePhotoActions">
                       <button className="secondaryBtn" onClick={() => chooseFramePhoto(selected.id)}>{selected.imageSrc ? 'Replace photo' : '+ Attach photo'}</button>
-                      {selected.imageSrc && <button className="miniBtn danger" onClick={() => updateLayer(selected.id, { imageSrc: null, imageName: '' })}>Clear</button>}
+                      {selected.imageSrc && <button className="miniBtn" onClick={() => enterCropMode(selected)}>Crop</button>}
+                      {selected.imageSrc && <button className="miniBtn danger" onClick={() => { setCropLayerId(null); updateLayer(selected.id, { imageSrc: null, imageName: '', imageScale: 1, imagePositionX: 50, imagePositionY: 50 }); }}>Delete photo</button>}
                     </div>
+                    {selected.imageSrc && <div className="cropHelp">Double-click the photo on the canvas, then drag it inside the frame to crop.</div>}
                     <div className="fieldGrid">
                       <label>Frame shape<select disabled={selectedTransformLocked} value={selected.customFrameKind || selected.frameShape || 'rect'} onChange={(e) => {
                         const kind = e.target.value;
@@ -2264,10 +2268,37 @@ export default function TypographyStudio() {
                 <label className="rangeLabel">Opacity <span>{Math.round((selected.opacity ?? 1) * 100)}%</span><input type="range" min="10" max="100" value={(selected.opacity ?? 1) * 100} onChange={(e) => updateLayer(selected.id, { opacity: +e.target.value / 100 })} /></label>
                 <button className={`layerLockButton ${selected.locked ? 'locked' : ''}`} onClick={() => updateLayer(selected.id, { locked: !selected.locked })}>{selected.locked ? '🔒 Unlock this layer' : '🔓 Lock this layer'}</button>
                 <div className="buttonRow"><button disabled={selectedTransformLocked} className="miniBtn" onClick={() => moveLayer('down')}>Backward</button><button disabled={selectedTransformLocked} className="miniBtn" onClick={() => moveLayer('up')}>Forward</button></div>
-                <div className="buttonRow"><button disabled={selectedTransformLocked} className="miniBtn" onClick={duplicateSelected}>Duplicate</button><button disabled={!selectedCanDelete} className="miniBtn danger" onClick={removeSelected}>{selected?.type === 'frame' && selected?.imageSrc ? 'Clear photo' : 'Delete'}</button></div>
+                <div className="buttonRow"><button disabled={selectedTransformLocked} className="miniBtn" onClick={duplicateSelected}>Duplicate</button><button disabled={!selectedCanDelete} className="miniBtn danger" onClick={removeSelected}>{selected?.type === 'frame' ? 'Delete frame' : selected?.type === 'image' ? 'Delete photo' : 'Delete'}</button></div>
               </div>
             </>
           ) : <div className="emptyInspector">Select text, a picture, frame, or block on the canvas to edit it.</div>}
+
+          <div className="panelSection">
+            <div className="sectionTitle">Background</div>
+            <div className="colorControl">
+              <input type="color" value={background} onChange={(e) => { setBackground(e.target.value); setGradient(false); }} />
+              <input value={background} onChange={(e) => { setBackground(e.target.value); setGradient(false); }} />
+            </div>
+            <label className="checkRow"><input type="checkbox" checked={gradient} onChange={(e) => setGradient(e.target.checked)} /> Kiocreates soft gradient</label>
+            <div className="buttonRow backgroundActions">
+              <button className="secondaryBtn" onClick={() => backgroundFileRef.current?.click()}>{backgroundPhoto ? 'Replace photo' : '+ Photo background'}</button>
+              {backgroundPhoto && <button className="miniBtn danger" onClick={() => setBackgroundPhoto('')}>Remove</button>}
+            </div>
+            {backgroundPhoto && (
+              <div className="backgroundPhotoControls">
+                <div className="fieldGrid">
+                  <label>Placement<select value={backgroundPhotoPlacement} onChange={(e) => setBackgroundPhotoPlacement(e.target.value)}><option value="full">Full canvas</option><option value="top">Top half</option><option value="bottom">Bottom half</option><option value="left">Left half</option><option value="right">Right half</option></select></label>
+                  <label>Blend<select value={backgroundPhotoBlend} onChange={(e) => setBackgroundPhotoBlend(e.target.value)}>{BLEND_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                </div>
+                <label className="rangeLabel">Crop zoom <span>{Math.round(backgroundPhotoScale * 100)}%</span><input type="range" min="100" max="300" value={backgroundPhotoScale * 100} onChange={(e) => setBackgroundPhotoScale(+e.target.value / 100)} /></label>
+                <label className="rangeLabel">Crop X <span>{Math.round(backgroundPhotoPositionX)}%</span><input type="range" min="0" max="100" value={backgroundPhotoPositionX} onChange={(e) => setBackgroundPhotoPositionX(+e.target.value)} /></label>
+                <label className="rangeLabel">Crop Y <span>{Math.round(backgroundPhotoPositionY)}%</span><input type="range" min="0" max="100" value={backgroundPhotoPositionY} onChange={(e) => setBackgroundPhotoPositionY(+e.target.value)} /></label>
+                <label className="rangeLabel">Photo opacity <span>{Math.round(backgroundPhotoOpacity * 100)}%</span><input type="range" min="0" max="100" value={backgroundPhotoOpacity * 100} onChange={(e) => setBackgroundPhotoOpacity(+e.target.value / 100)} /></label>
+                <label className="rangeLabel">Blur <span>{backgroundPhotoBlur}px</span><input type="range" min="0" max="24" value={backgroundPhotoBlur} onChange={(e) => setBackgroundPhotoBlur(+e.target.value)} /></label>
+                <button className="miniBtn" onClick={() => { setBackgroundPhotoScale(1); setBackgroundPhotoPositionX(50); setBackgroundPhotoPositionY(50); }}>Reset crop</button>
+              </div>
+            )}
+          </div>
 
           <div className="panelSection">
             <div className="sectionTitle">Branding <span>{BRAND_STYLES[brandStyleKey]?.label || 'Custom'}</span></div>
@@ -2285,12 +2316,15 @@ export default function TypographyStudio() {
           </div>
         </aside>
       </section>
-      <nav className="mobileQuickBar" aria-label="Mobile editor shortcuts">
-        <button onClick={() => document.querySelector('.stageColumn')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>▣</span><small>Canvas</small></button>
-        <button onClick={() => document.querySelector('.leftPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>▦</span><small>Templates</small></button>
-        <button onClick={() => document.querySelector('.inspectorPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>✦</span><small>Edit</small></button>
-        <button onClick={() => exportImage('jpg')} disabled={exporting}><span>↓</span><small>JPG</small></button>
-      </nav>
+      )}
+      {workspacePage === 'freeform' && (
+        <nav className="mobileQuickBar" aria-label="Mobile editor shortcuts">
+          <button onClick={() => document.querySelector('.stageColumn')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>▣</span><small>Canvas</small></button>
+          <button onClick={() => setWorkspacePage('templates')}><span>▦</span><small>Templates</small></button>
+          <button onClick={() => document.querySelector('.inspectorPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>✦</span><small>Edit</small></button>
+          <button onClick={() => exportImage('jpg')} disabled={exporting}><span>↓</span><small>JPG</small></button>
+        </nav>
+      )}
     </main>
   );
 }

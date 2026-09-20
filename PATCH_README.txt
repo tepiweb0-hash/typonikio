@@ -1,21 +1,27 @@
-TyponiKio / Kiocreates Typography Studio
-V1.6 Remix-from-Post Patch
+TyponiKio V1.8 UI + Crop PATCH
+Base: apply over V1.7
 
-Replace / merge these files into your current project:
+Changed files:
 - components/TypographyStudio.js
 - app/globals.css
-- package.json
 
-Added:
-- Upload post screenshot / reference image
-- OCR-based text extraction using tesseract.js
-- Review/edit detected text before generation
-- "Generate 5 designs" autosuggest flow
-- "5 more" variation button
-- Use a suggested design directly on the canvas
-- Best-effort placement of the uploaded reference into photo-aware templates
-- Suggestion cards with mini previews
+Updates:
+1. New top navigation: Recreate / Templates / Freeform.
+2. Recreate is now its own clean page with separate Upload, Review Text, Generate, and Choose Design steps.
+3. Uploaded Recreate screenshot is reference-only and is never inserted into the editing canvas.
+4. Templates now have a separate library page with categories and larger previews.
+5. Freeform/editor is decluttered; template library and recreate controls were removed from the editor sidebar.
+6. Selected text/image/frame controls now stay beside the canvas; selected-layer controls appear before background controls.
+7. Added visible Delete Photo controls for standalone images and photos inside frames.
+8. Added quick delete X for selected photos on the canvas.
+9. Canva-style frame crop: double-click a frame photo, then drag the photo inside the frame. Includes Reset and Done.
+10. Mobile/editor layout updated for the new nav and crop controls.
+11. Fixes the stray invalid character inherited from the V1.7 source.
 
-Note:
-- OCR is best-effort. Low-quality screenshots may need manual text cleanup.
-- The uploaded reference is used as the visual source for recreation/remix. Exact image extraction from a screenshot is not guaranteed in this lightweight patch.
+Validation performed:
+- app/layout.js parsed successfully
+- app/page.js parsed successfully
+- components/TypographyStudio.js JSX parsed successfully
+- app/globals.css parsed successfully
+
+A full Next.js build was not run because node_modules are not installed in this workspace.
