@@ -331,7 +331,13 @@ const templates = [
   { id:'frames-window-caption', name:'Window + Caption', category:'Photo Frames', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.15,y:.66,w:.48,size:.038,weight:650, font:FONT_VALUES['Libre Baskerville'], frames:[{key:'main',x:.14,y:.12,w:.72,h:.46,radius:4,shape:'rect'}], label:'digital poetry' },
   { id:'frames-arch', name:'Soft Arch', category:'Photo Frames', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.16,y:.70,w:.68,size:.042,weight:730, font:FONT_VALUES['Playfair Display'], frames:[{key:'main',x:.25,y:.10,w:.50,h:.50,radius:180,shape:'arch'}] },
   { id:'frames-collage-four', name:'Four Memories', category:'Photo Frames', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.14,y:.72,w:.72,size:.040,weight:700, font:FONT_VALUES['Inter'], frames:[{key:'a',x:.08,y:.10,w:.38,h:.25,radius:10,shape:'rect'},{key:'b',x:.54,y:.10,w:.38,h:.25,radius:10,shape:'rect'},{key:'c',x:.08,y:.39,w:.38,h:.25,radius:10,shape:'rect'},{key:'d',x:.54,y:.39,w:.38,h:.25,radius:10,shape:'rect'}] },
-  { id:'frames-photo-note', name:'Photo + Tiny Note', category:'Photo Frames', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.68,y:.60,w:.22,size:.028,weight:600, font:FONT_VALUES['Inter'], frames:[{key:'main',x:.08,y:.12,w:.52,h:.60,radius:18,shape:'rect'}], label:'note 01' }
+  { id:'frames-photo-note', name:'Photo + Tiny Note', category:'Photo Frames', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'left', x:.68,y:.60,w:.22,size:.028,weight:600, font:FONT_VALUES['Inter'], frames:[{key:'main',x:.08,y:.12,w:.52,h:.60,radius:18,shape:'rect'}], label:'note 01' },
+
+  // FISHEYE / WARP
+  { id:'fisheye-soft-burst', name:'Soft Burst', category:'Fisheye & Warp', bg:'#ffffff', text:'#15171a', accent:'#645cff', align:'center', x:.12,y:.34,w:.76,size:.072,weight:900, font:FONT_VALUES['Space Grotesk'], effect:'fisheye', previewText:'stay weird' },
+  { id:'fisheye-lavender', name:'Lavender Lens', category:'Fisheye & Warp', bg:'#f0efff', text:'#15171a', accent:'#645cff', align:'center', x:.10,y:.34,w:.80,size:.074,weight:900, font:FONT_VALUES['Bebas Neue'], effect:'fisheye', previewText:'LOOK AT ME' },
+  { id:'fisheye-midnight', name:'Midnight Lens', category:'Fisheye & Warp', bg:'#15171a', text:'#ffffff', accent:'#8d86ff', align:'center', x:.10,y:.34,w:.80,size:.074,weight:900, font:FONT_VALUES['Bebas Neue'], effect:'fisheye', previewText:'late thoughts', footerStyle:'script-social' },
+  { id:'fisheye-repeat-wave', name:'Warp + Repeat', category:'Fisheye & Warp', bg:'#fff6ee', text:'#f5482f', accent:'#2146ff', align:'center', x:.12,y:.33,w:.76,size:.070,weight:900, font:FONT_VALUES['Bebas Neue'], effect:'fisheye', previewText:'FEELS LOUD', footerStyle:'social' }
 
 ];
 
@@ -538,6 +544,11 @@ function makeQuoteLayer(template, width, height, text = starterQuote) {
       break;
     case 'poster-repeat':
       layer.uppercase = true;
+      break;
+    case 'fisheye':
+      layer.uppercase = true;
+      layer.warp = 'fisheye';
+      layer.lineHeight = Math.max(0.86, (layer.lineHeight || 1.05) - 0.10);
       break;
     default:
       break;
@@ -831,6 +842,161 @@ function buildTemplateLayers(template, width, height, quoteText) {
   return [...base, quote];
 }
 
+\
+const DYNAMIC_RECREATE_RECIPES = [
+  { id:'dynamic-soft-editorial', name:'Soft Editorial', category:'Dynamic Recreate', background:'#ffffff', accent:'#645cff', footerStyle:'serif', layout:'centered' },
+  { id:'dynamic-memory-window', name:'Memory Window', category:'Dynamic Recreate', background:'#f5f2ed', accent:'#645cff', footerStyle:'signature', layout:'center-photo' },
+  { id:'dynamic-split-story', name:'Split Story', category:'Dynamic Recreate', background:'#ffffff', accent:'#645cff', footerStyle:'tiny', layout:'split-photo' },
+  { id:'dynamic-background-whisper', name:'Background Whisper', category:'Dynamic Recreate', background:'#ffffff', accent:'#645cff', footerStyle:'editorial', layout:'background-card' },
+  { id:'dynamic-fisheye-burst', name:'Fisheye Burst', category:'Dynamic Recreate', background:'#15171a', accent:'#8d86ff', footerStyle:'script-social', layout:'fisheye' },
+  { id:'dynamic-film-note', name:'Film Note', category:'Dynamic Recreate', background:'#15171a', accent:'#8d86ff', footerStyle:'handwritten', layout:'filmstrip' },
+  { id:'dynamic-layered-note', name:'Layered Note', category:'Dynamic Recreate', background:'#f0efff', accent:'#645cff', footerStyle:'social', layout:'layered-card' }
+];
+
+function normalizeRemixText(text = '') {
+  return String(text || '').replace(/\r/g, '').trim() || starterQuote;
+}
+
+function splitDynamicText(text, parts = 2) {
+  const manual = normalizeRemixText(text).split('\n').map((line) => line.trim()).filter(Boolean);
+  if (manual.length >= parts) {
+    const out = manual.slice(0, parts);
+    while (out.length < parts) out.push('');
+    return out;
+  }
+  const words = normalizeRemixText(text).replace(/\s+/g, ' ').split(' ').filter(Boolean);
+  if (!words.length) return Array(parts).fill('');
+  const per = Math.ceil(words.length / parts);
+  const out = [];
+  for (let i = 0; i < parts; i++) out.push(words.slice(i * per, (i + 1) * per).join(' '));
+  while (out.length < parts) out.push('');
+  return out;
+}
+
+function buildDynamicRemixLayers(recipe, width, height, text = starterQuote) {
+  const safeText = normalizeRemixText(text);
+  const accent = recipe.accent || BRAND.accent;
+  const dark = ['#15171a', '#1b1235', '#162134', '#28233f'].includes(String(recipe.background).toLowerCase());
+  const textColor = dark ? '#ffffff' : BRAND.text;
+  const layers = [];
+  const add = (layer) => { layers.push(layer); return layer; };
+
+  if (recipe.layout === 'centered') {
+    add(makeShapeLayer({ x: width * 0.12, y: height * 0.18, width: width * 0.76, height: height * 0.60, fill: '#ffffff', stroke: rgba(accent, 0.14), radius: 28, z: 1 }));
+    const quote = makeTextLayer({ text: safeText, x: width * 0.16, y: height * 0.30, width: width * 0.68, fontSize: Math.round(Math.min(width, height) * 0.056), weight: 700, color: textColor, align: 'center', z: 10, fontFamily: FONT_VALUES['Playfair Display'], lineHeight: adaptiveLineHeight(safeText, width * 0.68, Math.round(Math.min(width, height) * 0.056), 1.08) });
+    quote.role = 'quote';
+    quote.autoSpacing = true;
+    add(quote);
+  }
+
+  if (recipe.layout === 'center-photo') {
+    const frame = makeFrameLayer({ slotKey: `${recipe.id}-photo`, x: width * 0.20, y: height * 0.12, width: width * 0.60, height: height * 0.42, radius: 18, shape: 'rect', z: 4, dark });
+    add(frame);
+    const quote = makeTextLayer({ text: safeText, x: width * 0.14, y: height * 0.63, width: width * 0.72, fontSize: Math.round(Math.min(width, height) * 0.042), weight: 650, color: textColor, align: 'center', z: 10, fontFamily: FONT_VALUES['Lora'], lineHeight: adaptiveLineHeight(safeText, width * 0.72, Math.round(Math.min(width, height) * 0.042), 1.10) });
+    quote.role = 'quote';
+    add(quote);
+  }
+
+  if (recipe.layout === 'split-photo') {
+    const frame = makeFrameLayer({ slotKey: `${recipe.id}-photo`, x: width * 0.08, y: height * 0.12, width: width * 0.38, height: height * 0.68, radius: 10, shape: 'rect', z: 4, dark });
+    add(frame);
+    const [one, two] = splitDynamicText(safeText, 2);
+    const a = makeTextLayer({ text: one, x: width * 0.55, y: height * 0.22, width: width * 0.28, fontSize: Math.round(Math.min(width, height) * 0.070), weight: 900, color: textColor, align: 'left', z: 11, fontFamily: FONT_VALUES['Bebas Neue'], lineHeight: 0.94, uppercase: true });
+    a.role = 'quote';
+    const b = makeTextLayer({ text: two, x: width * 0.55, y: height * 0.50, width: width * 0.26, fontSize: Math.round(Math.min(width, height) * 0.036), weight: 600, color: textColor, align: 'left', z: 12, fontFamily: FONT_VALUES['Inter'], lineHeight: adaptiveLineHeight(two, width * 0.26, Math.round(Math.min(width, height) * 0.036), 1.10) });
+    b.role = 'quote-secondary';
+    add(a);
+    add(b);
+  }
+
+  if (recipe.layout === 'background-card') {
+    const keyword = wordsToKey(safeText, 2);
+    const under = makeTextLayer({ text: keyword, x: width * 0.06, y: height * 0.14, width: width * 0.88, fontSize: Math.round(Math.min(width, height) * 0.15), weight: 900, color: rgba(accent, 0.10), align: 'center', z: 1, fontFamily: FONT_VALUES['Bebas Neue'], uppercase: true, lineHeight: 0.9 });
+    under.role = 'decor';
+    add(under);
+    add(makeShapeLayer({ x: width * 0.12, y: height * 0.28, width: width * 0.76, height: height * 0.42, fill: '#ffffff', stroke: rgba(accent, 0.14), radius: 24, z: 2 }));
+    const quote = makeTextLayer({ text: safeText, x: width * 0.18, y: height * 0.38, width: width * 0.64, fontSize: Math.round(Math.min(width, height) * 0.044), weight: 650, color: BRAND.text, align: 'center', z: 10, fontFamily: FONT_VALUES['Cormorant Garamond'], lineHeight: adaptiveLineHeight(safeText, width * 0.64, Math.round(Math.min(width, height) * 0.044), 1.06) });
+    quote.role = 'quote';
+    add(quote);
+  }
+
+  if (recipe.layout === 'fisheye') {
+    const [one, two] = splitDynamicText(safeText, 2);
+    const quote = makeTextLayer({ text: `${one}\n${two}`.trim(), x: width * 0.08, y: height * 0.28, width: width * 0.84, fontSize: Math.round(Math.min(width, height) * 0.082), weight: 900, color: '#ffffff', align: 'center', z: 10, fontFamily: FONT_VALUES['Bebas Neue'], lineHeight: 0.88, uppercase: true });
+    quote.role = 'quote';
+    quote.warp = 'fisheye';
+    add(quote);
+    const sub = makeTextLayer({ text: 'dynamic recreate', x: width * 0.28, y: height * 0.76, width: width * 0.44, fontSize: Math.round(Math.min(width, height) * 0.02), weight: 800, color: rgba('#ffffff', 0.66), align: 'center', z: 11, fontFamily: defaultFont, letterSpacing: 5, uppercase: true });
+    sub.role = 'decor';
+    add(sub);
+  }
+
+  if (recipe.layout === 'filmstrip') {
+    const slots = [0.10, 0.38, 0.66];
+    slots.forEach((left, index) => add(makeFrameLayer({ slotKey: `${recipe.id}-${index}`, x: width * left, y: height * 0.14, width: width * 0.22, height: height * 0.30, radius: 3, shape: 'rect', z: 4 + index, dark: true })));
+    const quote = makeTextLayer({ text: safeText, x: width * 0.14, y: height * 0.58, width: width * 0.72, fontSize: Math.round(Math.min(width, height) * 0.040), weight: 650, color: '#ffffff', align: 'center', z: 10, fontFamily: FONT_VALUES['Lora'], lineHeight: adaptiveLineHeight(safeText, width * 0.72, Math.round(Math.min(width, height) * 0.040), 1.08) });
+    quote.role = 'quote';
+    add(quote);
+  }
+
+  if (recipe.layout === 'layered-card') {
+    add(makeShapeLayer({ x: width * 0.10, y: height * 0.15, width: width * 0.46, height: height * 0.16, fill: rgba(accent, 0.14), stroke: 'transparent', radius: 20, z: 1 }));
+    add(makeShapeLayer({ x: width * 0.28, y: height * 0.26, width: width * 0.58, height: height * 0.48, fill: '#ffffff', stroke: rgba(accent, 0.18), radius: 26, z: 2 }));
+    const [one, two, three] = splitDynamicText(safeText, 3);
+    const a = makeTextLayer({ text: one, x: width * 0.18, y: height * 0.18, width: width * 0.58, fontSize: Math.round(Math.min(width, height) * 0.074), weight: 900, color: BRAND.text, align: 'left', z: 10, fontFamily: FONT_VALUES['Bebas Neue'], lineHeight: 0.94, uppercase: true });
+    const b = makeTextLayer({ text: two, x: width * 0.34, y: height * 0.39, width: width * 0.42, fontSize: Math.round(Math.min(width, height) * 0.040), weight: 700, color: BRAND.text, align: 'left', z: 11, fontFamily: FONT_VALUES['Playfair Display'], lineHeight: adaptiveLineHeight(two, width * 0.42, Math.round(Math.min(width, height) * 0.040), 1.05) });
+    const c = makeTextLayer({ text: three, x: width * 0.34, y: height * 0.60, width: width * 0.38, fontSize: Math.round(Math.min(width, height) * 0.026), weight: 650, color: BRAND.text, align: 'left', z: 12, fontFamily: FONT_VALUES['Inter'], lineHeight: adaptiveLineHeight(three, width * 0.38, Math.round(Math.min(width, height) * 0.026), 1.12) });
+    a.role = 'quote';
+    b.role = 'quote-secondary';
+    c.role = 'quote-tertiary';
+    add(a); add(b); add(c);
+  }
+
+  return layers.map((layer) => ({ ...layer, templateOwned: true }));
+}
+
+function makeDynamicRecreateState(recipeId, sizeKey, quoteText = starterQuote) {
+  const [width, height] = CANVAS_PRESETS[sizeKey];
+  const recipe = DYNAMIC_RECREATE_RECIPES.find((item) => item.id === recipeId) || DYNAMIC_RECREATE_RECIPES[0];
+  return {
+    background: recipe.background,
+    gradient: false,
+    layers: buildDynamicRemixLayers(recipe, width, height, quoteText),
+    recipe
+  };
+}
+
+function DynamicMiniPreview({ recipeId, text }) {
+  const preview = makeDynamicRecreateState(recipeId, 'square', text);
+  const recipe = preview.recipe;
+  const width = 1080;
+  const height = 1080;
+  const dark = ['#15171a', '#1b1235', '#162134', '#28233f'].includes(String(preview.background).toLowerCase());
+  return (
+    <span className="templatePreview actualTemplatePreview" style={{ background: preview.background, color: dark ? '#ffffff' : BRAND.text }}>
+      {[...preview.layers].sort((a, b) => (a.z || 0) - (b.z || 0)).map((layer) => {
+        const common = {
+          left: `${(layer.x / width) * 100}%`,
+          top: `${(layer.y / height) * 100}%`,
+          width: `${(layer.width / width) * 100}%`,
+          opacity: layer.opacity ?? 1,
+          transform: `${layer.warp === 'fisheye' ? 'perspective(500px) rotateX(16deg) scaleX(1.05)' : ''} rotate(${layer.rotation || 0}deg)`,
+          zIndex: layer.z || 1
+        };
+        if (layer.type === 'shape' || layer.type === 'block') return <span key={layer.id} className="miniShape" style={{ ...common, height: `${(layer.height / height) * 100}%`, background: layer.fill, border: `1px solid ${layer.stroke || 'transparent'}`, borderRadius: `${Math.min(18, layer.radius || 0)}px` }} />;
+        if (layer.type === 'frame') {
+          const radius = layer.frameShape === 'circle' ? '50%' : layer.frameShape === 'arch' ? '50% 50% 8px 8px / 45% 45% 8px 8px' : `${Math.min(16, layer.radius || 0)}px`;
+          return <span key={layer.id} className="miniFrame" style={{ ...common, height: `${(layer.height / height) * 100}%`, borderRadius: radius }}><span className="miniPhotoShimmer" /></span>;
+        }
+        return (
+          <span key={layer.id} className="miniText" style={{ ...common, fontFamily: layer.fontFamily || defaultFont, fontWeight: layer.weight, fontStyle: layer.fontStyle || 'normal', fontSize: `${Math.max(4.5, (layer.fontSize / width) * 100)}cqw`, lineHeight: layer.lineHeight || 1.05, color: layer.color, textAlign: layer.align || 'left', whiteSpace: 'pre-wrap', letterSpacing: layer.letterSpacing ? `${layer.letterSpacing / 5}px` : undefined, WebkitTextStroke: layer.strokeColor && layer.strokeWidth ? `${Math.max(0.2, layer.strokeWidth / 5)}px ${layer.strokeColor}` : undefined, textShadow: layer.shadowColor ? `${(layer.shadowX || 0) / 6}px ${(layer.shadowY || 0) / 6}px ${(layer.shadowBlur || 0) / 6}px ${layer.shadowColor}` : undefined, textTransform: layer.uppercase ? 'uppercase' : undefined }}>{layer.uppercase ? String(layer.text || '').toUpperCase() : layer.text}</span>
+        );
+      })}
+      <span className="miniBrandWrap"><BrandMark dark={dark} styleKey={recipe.footerStyle || 'social'} mini /></span>
+    </span>
+  );
+}
+
 function makeTemplateState(templateId, sizeKey, quoteText = starterQuote) {
   const [width, height] = CANVAS_PRESETS[sizeKey];
   const template = templates.find((t) => t.id === templateId) || templates[0];
@@ -870,7 +1036,7 @@ function TemplateMiniPreview({ template }) {
           top: `${(layer.y / height) * 100}%`,
           width: `${(layer.width / width) * 100}%`,
           opacity: layer.opacity ?? 1,
-          transform: `rotate(${layer.rotation || 0}deg)`,
+          transform: `${layer.warp === 'fisheye' ? 'perspective(500px) rotateX(16deg) scaleX(1.05)' : ''} rotate(${layer.rotation || 0}deg)`,
           zIndex: layer.z || 1
         };
         if (layer.type === 'shape' || layer.type === 'block') {
@@ -894,6 +1060,7 @@ function TemplateMiniPreview({ template }) {
                 lineHeight: layer.lineHeight || 1.05,
                 color: layer.color,
                 textAlign: layer.align || 'left',
+                whiteSpace: 'pre-wrap',
                 letterSpacing: layer.letterSpacing ? `${layer.letterSpacing / 5}px` : undefined,
                 WebkitTextStroke: layer.strokeColor && layer.strokeWidth ? `${Math.max(0.2, layer.strokeWidth / 5)}px ${layer.strokeColor}` : undefined,
                 textShadow: layer.shadowColor ? `${(layer.shadowX || 0) / 6}px ${(layer.shadowY || 0) / 6}px ${(layer.shadowBlur || 0) / 6}px ${layer.shadowColor}` : undefined,
@@ -915,22 +1082,22 @@ function wrapLines(ctx, text, maxWidth) {
   const paragraphs = String(text || '').split('\n');
   const all = [];
   for (const paragraph of paragraphs) {
-    if (!paragraph) {
+    if (paragraph === '') {
       all.push('');
       continue;
     }
-    const words = paragraph.split(/\s+/);
+    const tokens = paragraph.match(/\s+|\S+/g) || [''];
     let line = '';
-    for (const word of words) {
-      const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width > maxWidth && line) {
+    for (const token of tokens) {
+      const test = `${line}${token}`;
+      if (line && ctx.measureText(test).width > maxWidth) {
         all.push(line);
-        line = word;
+        line = token;
       } else {
         line = test;
       }
     }
-    if (line) all.push(line);
+    all.push(line);
   }
   return all;
 }
@@ -1053,10 +1220,12 @@ export default function TypographyStudio() {
   const [remixBusy, setRemixBusy] = useState(false);
   const [remixSuggestions, setRemixSuggestions] = useState([]);
   const [remixSeed, setRemixSeed] = useState(0);
+  const [remixMode, setRemixMode] = useState('dynamic');
+  const [remixImageUsage, setRemixImageUsage] = useState('reference');
 
   const [canvasWidth, canvasHeight] = CANVAS_PRESETS[sizeKey];
   const selected = layers.find((l) => l.id === selectedId) || null;
-  const currentTemplate = templates.find((t) => t.id === templateId) || templates[0];
+  const currentTemplate = templates.find((t) => t.id === templateId) || null;
   const filteredTemplates = templateFilter === 'All' ? templates : templates.filter((t) => t.category === templateFilter);
   const groupedTemplates = (templateFilter === 'All' ? TEMPLATE_CATEGORIES.filter((cat) => cat !== 'All') : [templateFilter])
     .map((category) => ({ category, items: templates.filter((t) => t.category === category) }))
@@ -1286,19 +1455,33 @@ export default function TypographyStudio() {
   };
 
   const buildRemixSuggestions = (seedValue = Math.random()) => {
-    const hasImage = Boolean(remixImageSrc);
     const textValue = remixDetectedText.trim() || quoteText.trim() || starterQuote;
+    if (remixMode === 'dynamic') {
+      const picked = shuffleList(DYNAMIC_RECREATE_RECIPES, seedValue).slice(0, 5).map((recipe, index) => ({
+        id: `remix-dynamic-${index}-${recipe.id}`,
+        kind: 'dynamic',
+        recipeId: recipe.id,
+        name: recipe.name,
+        category: recipe.category,
+        text: textValue,
+        footerStyle: recipe.footerStyle
+      }));
+      setRemixSeed(seedValue);
+      setRemixSuggestions(picked);
+      return;
+    }
+    const hasImage = Boolean(remixImageSrc);
     const matching = (exp) => templates.filter((template) => exp.test(`${template.category} ${template.name} ${template.id}`));
     const pools = hasImage
       ? [
           matching(/poetry|relatable|photo|frame|editorial/i),
           matching(/mixed|soft|minimal|circular/i),
-          matching(/effect|repeat|poster|dark/i),
+          matching(/effect|repeat|poster|dark|fisheye/i),
           templates
         ]
       : [
           matching(/poetry|relatable|editorial|mixed/i),
-          matching(/minimal|soft|bold|poster/i),
+          matching(/minimal|soft|bold|poster|fisheye/i),
           matching(/effect|repeat|dark/i),
           templates
         ];
@@ -1313,58 +1496,77 @@ export default function TypographyStudio() {
       }
       if (picked.length === 5) break;
     }
-    const finalItems = picked.slice(0, 5);
-    const suggestions = finalItems.map((template, index) => ({
-      id: `remix-${index}-${template.id}`,
+    const finalItems = picked.slice(0, 5).map((template, index) => ({
+      id: `remix-template-${index}-${template.id}`,
+      kind: 'template',
       templateId: template.id,
       name: template.name,
       category: template.category,
-      useImage: hasImage && /photo|frame|poetry|relatable|editorial/i.test(`${template.category} ${template.name} ${template.id}`),
-      backgroundInstead: hasImage && /minimal|soft|dark|effect|repeat/i.test(`${template.category} ${template.name} ${template.id}`) && !/photo|frame/i.test(`${template.category} ${template.name} ${template.id}`),
       text: textValue
     }));
     setRemixSeed(seedValue);
-    setRemixSuggestions(suggestions);
+    setRemixSuggestions(finalItems);
   };
 
   const applyRemixSuggestion = (suggestion) => {
     const textValue = suggestion?.text?.trim() || remixDetectedText.trim() || quoteText.trim() || starterQuote;
+    const shouldUseFrame = remixImageSrc && remixImageUsage === 'frame';
+    const shouldUseBackground = remixImageSrc && remixImageUsage === 'background';
+
+    if (suggestion.kind === 'dynamic') {
+      const next = makeDynamicRecreateState(suggestion.recipeId, sizeKey, textValue);
+      let nextLayers = next.layers;
+      if (shouldUseFrame) {
+        let filled = false;
+        nextLayers = nextLayers.map((layer) => {
+          if (!filled && layer.type === 'frame') {
+            filled = true;
+            return { ...layer, imageSrc: remixImageSrc, imageName: remixFileName || 'reference', imageScale: 1, imagePositionX: 50, imagePositionY: 50, opacity: 1, blendMode: 'normal' };
+          }
+          return layer;
+        });
+        if (!filled) {
+          nextLayers = [...nextLayers, { id: nextId(), type: 'image', src: remixImageSrc, name: remixFileName || 'reference', x: canvasWidth * 0.18, y: canvasHeight * 0.18, width: canvasWidth * 0.64, height: canvasHeight * 0.42, rotation: 0, opacity: 1, z: Math.max(4, ...nextLayers.map((layer) => layer.z || 1)) + 1, aspectLocked: true }];
+        }
+      }
+      setMode('free');
+      setTemplateId('');
+      setQuoteText(textValue);
+      setBackground(next.background);
+      setGradient(next.gradient);
+      setLayers(nextLayers.map((layer) => ({ ...layer, templateOwned: false })));
+      setSelectedId(nextLayers.find((layer) => layer.role === 'quote')?.id || nextLayers[0]?.id || null);
+      setBrandStyleKey(suggestion.footerStyle || 'social');
+      setTemplateLocked(false);
+      if (shouldUseBackground) {
+        setBackgroundPhoto(remixImageSrc);
+        setBackgroundPhotoOpacity(0.34);
+        setBackgroundPhotoBlend('multiply');
+        setBackgroundPhotoBlur(0);
+        setBackgroundPhotoPlacement('full');
+        setBackgroundPhotoScale(1.08);
+        setBackgroundPhotoPositionX(50);
+        setBackgroundPhotoPositionY(50);
+      } else {
+        setBackgroundPhoto('');
+      }
+      document.querySelector('.stageColumn')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
     const next = makeTemplateState(suggestion.templateId, sizeKey, textValue);
     let nextLayers = next.layers;
-    if (remixImageSrc && suggestion.useImage) {
+    if (shouldUseFrame) {
       let frameAttached = false;
       nextLayers = nextLayers.map((layer) => {
         if (!frameAttached && layer.type === 'frame') {
           frameAttached = true;
-          return {
-            ...layer,
-            imageSrc: remixImageSrc,
-            imageName: remixFileName || 'reference',
-            imageScale: 1,
-            imagePositionX: 50,
-            imagePositionY: 50,
-            opacity: 1,
-            blendMode: 'normal'
-          };
+          return { ...layer, imageSrc: remixImageSrc, imageName: remixFileName || 'reference', imageScale: 1, imagePositionX: 50, imagePositionY: 50, opacity: 1, blendMode: 'normal' };
         }
         return layer;
       });
       if (!frameAttached) {
-        const imageLayer = {
-          id: nextId(),
-          type: 'image',
-          src: remixImageSrc,
-          name: remixFileName || 'reference',
-          x: canvasWidth * 0.18,
-          y: canvasHeight * 0.18,
-          width: canvasWidth * 0.64,
-          height: canvasHeight * 0.42,
-          rotation: 0,
-          opacity: 1,
-          z: Math.max(4, ...nextLayers.map((layer) => layer.z || 1)) + 1,
-          aspectLocked: true
-        };
-        nextLayers = [...nextLayers, imageLayer];
+        nextLayers = [...nextLayers, { id: nextId(), type: 'image', src: remixImageSrc, name: remixFileName || 'reference', x: canvasWidth * 0.18, y: canvasHeight * 0.18, width: canvasWidth * 0.64, height: canvasHeight * 0.42, rotation: 0, opacity: 1, z: Math.max(4, ...nextLayers.map((layer) => layer.z || 1)) + 1, aspectLocked: true }];
       }
     }
 
@@ -1377,29 +1579,36 @@ export default function TypographyStudio() {
     setSelectedId(nextLayers.find((layer) => layer.role === 'quote')?.id || nextLayers[0]?.id || null);
     setBrandStyleKey(footerStyleForTemplate(templates.find((item) => item.id === suggestion.templateId)));
     setTemplateLocked(true);
-    if (remixImageSrc) {
-      if (suggestion.backgroundInstead) {
-        setBackgroundPhoto(remixImageSrc);
-        setBackgroundPhotoOpacity(0.28);
-        setBackgroundPhotoBlend('multiply');
-        setBackgroundPhotoBlur(0);
-        setBackgroundPhotoPlacement('full');
-        setBackgroundPhotoScale(1.1);
-        setBackgroundPhotoPositionX(50);
-        setBackgroundPhotoPositionY(50);
-      } else {
-        setBackgroundPhoto('');
-      }
+    if (shouldUseBackground) {
+      setBackgroundPhoto(remixImageSrc);
+      setBackgroundPhotoOpacity(0.28);
+      setBackgroundPhotoBlend('multiply');
+      setBackgroundPhotoBlur(0);
+      setBackgroundPhotoPlacement('full');
+      setBackgroundPhotoScale(1.1);
+      setBackgroundPhotoPositionX(50);
+      setBackgroundPhotoPositionY(50);
+    } else {
+      setBackgroundPhoto('');
     }
     document.querySelector('.stageColumn')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const layerMovementLocked = (layer) => Boolean(layer?.locked || (mode === 'template' && templateLocked && layer?.templateOwned));
+  const canDeleteLayer = (layer) => Boolean(layer && (!layerMovementLocked(layer) || (layer.type === 'frame' && layer.imageSrc)));
 
   const removeSelected = () => {
-    if (!selected || layerMovementLocked(selected)) return;
-    setLayers((p) => p.filter((l) => l.id !== selected.id));
-    setSelectedId(null);
+    if (!selected) return;
+    if (selected.type === 'frame' && selected.imageSrc) {
+      updateLayer(selected.id, { imageSrc: null, imageName: '', imageScale: 1, imagePositionX: 50, imagePositionY: 50, blendMode: 'normal' });
+      return;
+    }
+    if (!canDeleteLayer(selected)) return;
+    setLayers((prev) => {
+      const next = prev.filter((layer) => layer.id !== selected.id);
+      setTimeout(() => setSelectedId(next[next.length - 1]?.id || null), 0);
+      return next;
+    });
   };
 
   const duplicateSelected = () => {
@@ -1539,8 +1748,43 @@ export default function TypographyStudio() {
     let xx = layer.x;
     if (layer.align === 'center') xx = layer.x + layer.width / 2;
     if (layer.align === 'right') xx = layer.x + layer.width;
+    const drawFisheyeLine = (line, baseX, baseY) => {
+      const chars = Array.from(line || ' ');
+      const widths = chars.map((ch) => ctx.measureText(ch).width + (layer.letterSpacing || 0));
+      const total = widths.reduce((sum, value) => sum + value, 0);
+      let startX = baseX;
+      if ((layer.align || 'left') === 'center') startX = baseX - total / 2;
+      if ((layer.align || 'left') === 'right') startX = baseX - total;
+      const center = startX + total / 2;
+      let cursor = startX;
+      chars.forEach((ch, index) => {
+        const step = widths[index] || 0;
+        const charCenter = cursor + step / 2;
+        const dist = total ? Math.min(1, Math.abs((charCenter - center) / (total / 2))) : 0;
+        const focus = 1 - dist;
+        const scale = 1 + focus * 0.38;
+        const yOffset = -layer.fontSize * 0.18 * focus;
+        ctx.save();
+        ctx.translate(charCenter, baseY + yOffset + layer.fontSize * 0.06);
+        ctx.scale(scale, scale);
+        ctx.translate(-step / 2, 0);
+        if (layer.strokeColor && layer.strokeWidth) {
+          ctx.lineWidth = layer.strokeWidth;
+          ctx.strokeStyle = layer.strokeColor;
+          ctx.strokeText(ch, 0, 0);
+        }
+        ctx.fillStyle = layer.color;
+        ctx.fillText(ch, 0, 0);
+        ctx.restore();
+        cursor += step;
+      });
+    };
     for (let i = 0; i < lines.length; i++) {
       const yy = layer.y + i * lh;
+      if (layer.warp === 'fisheye') {
+        drawFisheyeLine(lines[i], xx, yy);
+        continue;
+      }
       if (layer.strokeColor && layer.strokeWidth) {
         ctx.lineWidth = layer.strokeWidth;
         ctx.strokeStyle = layer.strokeColor;
@@ -1653,6 +1897,7 @@ export default function TypographyStudio() {
     transformOrigin: `${backgroundPhotoPositionX}% ${backgroundPhotoPositionY}%`
   };
   const selectedTransformLocked = selected ? layerMovementLocked(selected) : false;
+  const selectedCanDelete = selected ? canDeleteLayer(selected) : false;
 
   const quoteLayer = layers.find((l) => l.role === 'quote');
 
@@ -1665,7 +1910,7 @@ export default function TypographyStudio() {
     left: `${(layer.x / canvasWidth) * 100}%`,
     top: `${(layer.y / canvasHeight) * 100}%`,
     width: `${(layer.width / canvasWidth) * 100}%`,
-    transform: `rotate(${layer.rotation || 0}deg)`,
+    transform: `${layer.warp === 'fisheye' ? 'perspective(500px) rotateX(16deg) scaleX(1.05)' : ''} rotate(${layer.rotation || 0}deg)`,
     opacity: layer.opacity ?? 1,
     zIndex: layer.z || 1,
     fontSize: `${(layer.fontSize / canvasWidth) * 100}cqw`,
@@ -1741,6 +1986,10 @@ export default function TypographyStudio() {
               </div>
             )}
             <p className="remixHint">Upload a post screenshot and TyponiKio will suggest five redesigned versions. You can review the detected text before generating.</p>
+            <div className="fieldGrid">
+              <label>Suggestion mode<select value={remixMode} onChange={(e) => setRemixMode(e.target.value)}><option value="dynamic">Dynamic recreate</option><option value="template">Template remix</option></select></label>
+              <label>Image usage<select value={remixImageUsage} onChange={(e) => setRemixImageUsage(e.target.value)}><option value="reference">Reference only</option><option value="frame">Use as photo</option><option value="background">Use as background</option></select></label>
+            </div>
             {remixStatus && <div className="statusNote">{remixStatus}</div>}
             <textarea className="quoteInput remixTextarea" placeholder="Detected or pasted text will appear here…" value={remixDetectedText} onChange={(e) => setRemixDetectedText(e.target.value)} />
             <div className="buttonRow remixGenerateRow">
@@ -1750,19 +1999,18 @@ export default function TypographyStudio() {
             {remixSuggestions.length > 0 && (
               <div className="remixSuggestionList">
                 {remixSuggestions.map((suggestion) => {
-                  const template = templates.find((item) => item.id === suggestion.templateId);
-                  if (!template) return null;
+                  const template = suggestion.kind === 'template' ? templates.find((item) => item.id === suggestion.templateId) : null;
                   return (
                     <div key={suggestion.id} className="remixSuggestionCard">
                       <div className="remixSuggestionHead">
                         <div>
                           <strong>{suggestion.name}</strong>
-                          <span>{suggestion.category}</span>
+                          <span>{suggestion.kind === 'dynamic' ? 'Dynamic recreate' : suggestion.category}</span>
                         </div>
                         <button className="miniBtn" onClick={() => applyRemixSuggestion(suggestion)}>Use</button>
                       </div>
                       <div className="remixSuggestionPreview">
-                        <TemplateMiniPreview template={template} />
+                        {suggestion.kind === 'dynamic' ? <DynamicMiniPreview recipeId={suggestion.recipeId} text={suggestion.text} /> : template ? <TemplateMiniPreview template={template} /> : null}
                       </div>
                     </div>
                   );
@@ -1876,7 +2124,7 @@ export default function TypographyStudio() {
               {brandVisible && <div className={`brandOverlay ${brandPosition}`}><BrandMark dark={darkBrand} styleKey={brandStyleKey} /></div>}
             </div>
           </div>
-          <div className="canvasMeta"><span>{mode === 'template' ? currentTemplate.name : 'Free canvas'}</span><span>{canvasWidth} × {canvasHeight}px</span></div>
+          <div className="canvasMeta"><span>{mode === 'template' ? (currentTemplate?.name || 'Custom composition') : 'Free canvas'}</span><span>{canvasWidth} × {canvasHeight}px</span></div>
         </section>
 
         <aside className="panel inspectorPanel">
@@ -2016,7 +2264,7 @@ export default function TypographyStudio() {
                 <label className="rangeLabel">Opacity <span>{Math.round((selected.opacity ?? 1) * 100)}%</span><input type="range" min="10" max="100" value={(selected.opacity ?? 1) * 100} onChange={(e) => updateLayer(selected.id, { opacity: +e.target.value / 100 })} /></label>
                 <button className={`layerLockButton ${selected.locked ? 'locked' : ''}`} onClick={() => updateLayer(selected.id, { locked: !selected.locked })}>{selected.locked ? '🔒 Unlock this layer' : '🔓 Lock this layer'}</button>
                 <div className="buttonRow"><button disabled={selectedTransformLocked} className="miniBtn" onClick={() => moveLayer('down')}>Backward</button><button disabled={selectedTransformLocked} className="miniBtn" onClick={() => moveLayer('up')}>Forward</button></div>
-                <div className="buttonRow"><button disabled={selectedTransformLocked} className="miniBtn" onClick={duplicateSelected}>Duplicate</button><button disabled={selectedTransformLocked} className="miniBtn danger" onClick={removeSelected}>Delete</button></div>
+                <div className="buttonRow"><button disabled={selectedTransformLocked} className="miniBtn" onClick={duplicateSelected}>Duplicate</button><button disabled={!selectedCanDelete} className="miniBtn danger" onClick={removeSelected}>{selected?.type === 'frame' && selected?.imageSrc ? 'Clear photo' : 'Delete'}</button></div>
               </div>
             </>
           ) : <div className="emptyInspector">Select text, a picture, frame, or block on the canvas to edit it.</div>}

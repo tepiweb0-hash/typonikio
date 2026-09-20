@@ -1,0 +1,16 @@
+TyponiKio patch notes (v1.7)
+
+Implemented:
+1. Remix/Recreate now supports a Dynamic recreate mode (5 auto-suggested non-template layouts).
+2. Remix reference image defaults to Reference only, so it no longer auto-attaches unless chosen.
+3. Added Image usage selector: Reference only / Use as photo / Use as background.
+4. Added new Fisheye & Warp template options.
+5. Added fisheye text rendering for preview/export.
+6. Improved exported text wrapping to preserve spaces/new lines better.
+7. Improved delete behavior:
+   - selected layers delete more reliably
+   - frame photos can be cleared directly from Delete button
+8. Dynamic recreate outputs open as a free editable canvas.
+
+Main edited file:
+- components/TypographyStudio.js
